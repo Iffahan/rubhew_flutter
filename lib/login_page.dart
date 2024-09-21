@@ -1,8 +1,40 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+  // Declare TextEditingController variables
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  Future<void> _login(BuildContext context) async {
+    final username = usernameController.text;
+    final password = passwordController.text;
+
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:8000/token'),
+      headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {
+        'username': username,
+        'password': password,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final token = responseData['access_token'];
+      print("Login successful, Token: $token");
+
+      // Save the token locally for authenticated requests (Secure storage recommended)
+    } else {
+      print('Login failed');
+    }
+  }
+
+  LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +68,7 @@ class LoginPage extends StatelessWidget {
                     SizedBox(
                       width: 300, // Fixed width for text fields and buttons
                       child: TextField(
+                        controller: usernameController, // Bind the controller
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.person),
                           labelText: 'username/email',
@@ -54,6 +87,7 @@ class LoginPage extends StatelessWidget {
                     SizedBox(
                       width: 300,
                       child: TextField(
+                        controller: passwordController, // Bind the controller
                         obscureText: true,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.lock),
@@ -93,7 +127,17 @@ class LoginPage extends StatelessWidget {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          // Get the username and password
+                          String username = usernameController.text;
+                          String password = passwordController.text;
+
+                          _login(context);
+
+                          // You can now use the username and password variables
+                          print("Username: $username");
+                          print("Password: $password");
+                        },
                         child: const Text('Login',
                             style: TextStyle(color: Colors.white)),
                       ),
@@ -163,7 +207,7 @@ class LoginPage extends StatelessWidget {
           Container(
             width: double.infinity,
             color: Colors.white, // White background for the last row
-            padding: const EdgeInsets.symmetric(vertical: 10),
+
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
