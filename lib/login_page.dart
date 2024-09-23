@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:rubhew/main.dart';
 
 class LoginPage extends StatelessWidget {
   // Declare TextEditingController variables
@@ -27,10 +28,22 @@ class LoginPage extends StatelessWidget {
       final responseData = json.decode(response.body);
       final token = responseData['access_token'];
       print("Login successful, Token: $token");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
 
       // Save the token locally for authenticated requests (Secure storage recommended)
     } else {
-      print('Login failed');
+      // Show a SnackBar if login fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login failed. Please try again.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3), // SnackBar duration
+        ),
+      );
     }
   }
 
@@ -128,15 +141,7 @@ class LoginPage extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
                         onPressed: () {
-                          // Get the username and password
-                          String username = usernameController.text;
-                          String password = passwordController.text;
-
                           _login(context);
-
-                          // You can now use the username and password variables
-                          print("Username: $username");
-                          print("Password: $password");
                         },
                         child: const Text('Login',
                             style: TextStyle(color: Colors.white)),
