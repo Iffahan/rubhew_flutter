@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -11,8 +12,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -20,11 +20,69 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false; // For loading indicator
+
+  // Function to call the API
+  Future<void> _registerUser(String username, String firstName, String lastName,
+      String email, String password) async {
+    final url = Uri.parse('http://10.0.2.2:8000/users/create');
+    try {
+      setState(() {
+        _isLoading = true; // Show loading indicator
+      });
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'username': username,
+          'first_name': firstName,
+          'last_name': lastName,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Registration successful
+        print('Registration successful!');
+        // You can navigate to another page or show a success message here
+      } else {
+        // Handle API errors
+        print('Registration failed: ${response.body}');
+        // Show error message
+      }
+    } catch (error) {
+      print('Error: $error');
+      // Show error message
+    } finally {
+      setState(() {
+        _isLoading = false; // Hide loading indicator
+      });
+    }
+  }
 
   void _register() {
     if (_formKey.currentState!.validate()) {
-      // Implement registration logic here
-      print("User Registered!");
+      String fullName = _nameController.text.trim();
+      List<String> nameParts = fullName.split(' ');
+
+      String firstName = nameParts[0];
+      String lastName = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : ''; // Handle first and last names
+
+      // Call the API
+      _registerUser(
+        _usernameController.text.trim(),
+        firstName,
+        lastName,
+        _emailController.text.trim(),
+        _confirmPasswordController.text
+            .trim(), // Use confirm password as the actual password
+      );
     }
   }
 
@@ -32,26 +90,45 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF219EBC),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Back button functionality
+          },
+        ),
         title: const Text('Register'),
+        centerTitle: false, // Align title to the left
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            onPressed: _showHelpDialog, // Help button functionality
+          ),
+        ],
       ),
-      backgroundColor:
-          const Color(0xFFF3E5D7), // Background color similar to the design
-      body: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween, // This pushes the bottom row down
-        children: [
-          Expanded(
-            child: Center(
-              child: Padding(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF219EBC), Color(0xFF8ECAE6)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Logo and Title
                     const SizedBox(height: 50),
                     Image.asset(
-                      'assets/logo.png', // Replace with your logo path
+                      'assets/logo.png',
                       height: 100,
                     ),
                     const SizedBox(height: 40),
@@ -63,20 +140,26 @@ class _RegisterPageState extends State<RegisterPage> {
                         children: [
                           // Username Field
                           SizedBox(
-                            width:
-                                300, // Fixed width for text fields and buttons
+                            width: 300,
                             child: TextFormField(
                               controller: _usernameController,
                               decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.person),
+                                prefixIcon: const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                ),
                                 labelText: 'Username',
+                                labelStyle:
+                                    const TextStyle(color: Colors.white),
                                 filled: true,
-                                fillColor: Colors.grey[300],
+                                fillColor: const Color(
+                                    0xFFFFB703), // Yellow background
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(30),
                                   borderSide: BorderSide.none,
                                 ),
                               ),
+                              style: const TextStyle(color: Colors.white),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter a username';
@@ -87,65 +170,34 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 16.0),
 
-// First Name and Last Name (side by side)
-                          Row(
-                            children: [
-                              // First Name
-                              Expanded(
-                                child: SizedBox(
-                                  width:
-                                      160, // Set a consistent width for the first name field
-                                  child: TextFormField(
-                                    controller: _firstNameController,
-                                    decoration: InputDecoration(
-                                      prefixIcon:
-                                          const Icon(Icons.person_outline),
-                                      labelText: 'First Name',
-                                      filled: true,
-                                      fillColor: Colors.grey[300],
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your first name';
-                                      }
-                                      return null;
-                                    },
-                                  ),
+                          // Name Field
+                          SizedBox(
+                            width: 300,
+                            child: TextFormField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(
+                                  Icons.person_outline,
+                                  color: Colors.white,
+                                ),
+                                labelText: 'Name',
+                                labelStyle:
+                                    const TextStyle(color: Colors.white),
+                                filled: true,
+                                fillColor: const Color(0xFFFFB703),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  borderSide: BorderSide.none,
                                 ),
                               ),
-                              const SizedBox(width: 16.0),
-                              // Last Name
-                              Expanded(
-                                child: SizedBox(
-                                  width:
-                                      160, // Set a consistent width for the last name field
-                                  child: TextFormField(
-                                    controller: _lastNameController,
-                                    decoration: InputDecoration(
-                                      prefixIcon:
-                                          const Icon(Icons.person_outline),
-                                      labelText: 'Last Name',
-                                      filled: true,
-                                      fillColor: Colors.grey[300],
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(30),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your last name';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
+                              style: const TextStyle(color: Colors.white),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your name';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                           const SizedBox(height: 16.0),
 
@@ -155,16 +207,22 @@ class _RegisterPageState extends State<RegisterPage> {
                             child: TextFormField(
                               controller: _emailController,
                               decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.email),
+                                prefixIcon: const Icon(
+                                  Icons.email,
+                                  color: Colors.white,
+                                ),
                                 labelText: 'Email',
+                                labelStyle:
+                                    const TextStyle(color: Colors.white),
                                 filled: true,
-                                fillColor: Colors.grey[300],
+                                fillColor: const Color(0xFFFFB703),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(30),
                                   borderSide: BorderSide.none,
                                 ),
                               ),
                               keyboardType: TextInputType.emailAddress,
+                              style: const TextStyle(color: Colors.white),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
@@ -179,35 +237,41 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 16.0),
 
-                          // Password Field with Eye Icon
+                          // Password Field
                           SizedBox(
                             width: 300,
                             child: TextFormField(
                               controller: _passwordController,
                               decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.lock),
+                                prefixIcon: const Icon(
+                                  Icons.lock,
+                                  color: Colors.white,
+                                ),
                                 labelText: 'Password',
+                                labelStyle:
+                                    const TextStyle(color: Colors.white),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isPasswordVisible
                                         ? Icons.visibility
                                         : Icons.visibility_off,
+                                    color: Colors.white,
                                   ),
                                   onPressed: () {
                                     setState(() {
-                                      _isPasswordVisible =
-                                          !_isPasswordVisible; // Toggle visibility
+                                      _isPasswordVisible = !_isPasswordVisible;
                                     });
                                   },
                                 ),
                                 filled: true,
-                                fillColor: Colors.grey[300],
+                                fillColor: const Color(0xFFFFB703),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(30),
                                   borderSide: BorderSide.none,
                                 ),
                               ),
                               obscureText: !_isPasswordVisible,
+                              style: const TextStyle(color: Colors.white),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your password';
@@ -221,19 +285,25 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(height: 16.0),
 
-                          // Confirm Password Field with Eye Icon
+                          // Confirm Password Field
                           SizedBox(
                             width: 300,
                             child: TextFormField(
                               controller: _confirmPasswordController,
                               decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.lock_outline),
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline,
+                                  color: Colors.white,
+                                ),
                                 labelText: 'Confirm Password',
+                                labelStyle:
+                                    const TextStyle(color: Colors.white),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isConfirmPasswordVisible
                                         ? Icons.visibility
                                         : Icons.visibility_off,
+                                    color: Colors.white,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -243,13 +313,14 @@ class _RegisterPageState extends State<RegisterPage> {
                                   },
                                 ),
                                 filled: true,
-                                fillColor: Colors.grey[300],
+                                fillColor: const Color(0xFFFFB703),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(30),
                                   borderSide: BorderSide.none,
                                 ),
                               ),
                               obscureText: !_isConfirmPasswordVisible,
+                              style: const TextStyle(color: Colors.white),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please confirm your password';
@@ -261,56 +332,99 @@ class _RegisterPageState extends State<RegisterPage> {
                               },
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 32.0),
 
                           // Register Button
                           SizedBox(
                             width: 300,
                             child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : _register, // Disable button if loading
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[600],
+                                backgroundColor: const Color(0xFF023047),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 15),
                               ),
-                              onPressed: _register,
-                              child: const Text('Register',
-                                  style: TextStyle(color: Colors.white)),
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                    )
+                                  : const Text(
+                                      'Register',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
-                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ),
 
-          // Register Link Row with white background
-          Container(
-            width: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Already have an account? '),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Navigate back to login page
-                  },
-                  child:
-                      const Text('Login', style: TextStyle(color: Colors.blue)),
+              // Register Link Row with white background
+              Container(
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Already have an account?",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                              context, '/login'); // Navigate to login page
+                        },
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            color: Color(0xFF219EBC),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
+    );
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Help'),
+          content:
+              const Text('If you need assistance, please contact support.'),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
