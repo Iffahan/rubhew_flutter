@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rubhew/profile.dart';
 import 'home_page.dart';
 import 'feed_page.dart';
 import 'notification_page.dart';
@@ -34,6 +35,7 @@ class _MainScreenState extends State<MainScreen> {
     FeedPage(),
     NotificationPage(),
     MePage(),
+    ProfilePage()
   ];
 
   void _onItemTapped(int index) {

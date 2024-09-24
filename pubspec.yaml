@@ -10,8 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
   # flutter_launcher_icons: ^0.14.0
+  flutter_native_splash: ^2.4.1
   fluttertoast: ^8.2.8
   http: ^1.2.2
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -25,7 +27,11 @@ flutter_icons:
   android: true
   image_path : assets/logo.png
   
-
+flutter_native_splash:
+  color: "#00BFFF"  # สีพื้นหลัง (blue)
+  image: assets/images/splash_image.png  # ภาพโลโก้
+  android: true
+  ios: true
 
 flutter:
   uses-material-design: true

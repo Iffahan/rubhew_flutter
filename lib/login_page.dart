@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:rubhew/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatelessWidget {
   // Declare TextEditingController variables
@@ -28,6 +29,11 @@ class LoginPage extends StatelessWidget {
       final responseData = json.decode(response.body);
       final token = responseData['access_token'];
       print("Login successful, Token: $token");
+
+      // Save the token using SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainScreen()),
