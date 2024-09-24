@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:rubhew/main.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -48,6 +49,10 @@ class _RegisterPageState extends State<RegisterPage> {
       if (response.statusCode == 200) {
         // Registration successful
         print('Registration successful!');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
         // You can navigate to another page or show a success message here
       } else {
         // Handle API errors

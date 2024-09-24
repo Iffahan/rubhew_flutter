@@ -64,94 +64,96 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Box1 section with sliding pages
-          SizedBox(
-            width: screenWidth,
-            height: 260,
-            child: PageView(
-              controller: _boxPageController,
-              children: [
-                _buildBox(Colors.blueAccent, "Box 1"),
-                _buildBox(Colors.greenAccent, "Box 2"),
-                _buildBox(Colors.redAccent, "Box 3"),
-                _buildBox(Colors.orangeAccent, "Box 4"),
-              ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Box1 section with sliding pages
+            SizedBox(
+              width: screenWidth,
+              height: 260,
+              child: PageView(
+                controller: _boxPageController,
+                children: [
+                  _buildBox(Colors.blueAccent, "Box 1"),
+                  _buildBox(Colors.greenAccent, "Box 2"),
+                  _buildBox(Colors.redAccent, "Box 3"),
+                  _buildBox(Colors.orangeAccent, "Box 4"),
+                ],
+              ),
             ),
-          ),
-          Container(
-            width: screenWidth,
-            height: 130,
-            color: const Color.fromARGB(255, 255, 132, 132),
-            child: Column(
+            Container(
+              width: screenWidth,
+              height: 130,
+              color: const Color.fromARGB(255, 255, 132, 132),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      "Category",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        fontFamily: String.fromEnvironment("Promp"),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: SizedBox(
+                      height: 60, // Set height for circles container
+                      child: PageView(
+                        children: [
+                          _buildCircleRow([
+                            Colors.blue,
+                            Colors.green,
+                            Colors.red,
+                            Colors.yellow
+                          ]),
+                          _buildCircleRow([
+                            Colors.purple,
+                            Colors.orange,
+                            Colors.brown,
+                            Colors.pink
+                          ]),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: EdgeInsets.all(10),
                   child: Text(
-                    "Category",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
-                      fontFamily: String.fromEnvironment("Promp"),
-                    ),
+                    "Suggestion",
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 5),
-                  child: SizedBox(
-                    height: 60, // Set height for circles container
-                    child: PageView(
-                      children: [
-                        _buildCircleRow([
-                          Colors.blue,
-                          Colors.green,
-                          Colors.red,
-                          Colors.yellow
-                        ]),
-                        _buildCircleRow([
-                          Colors.purple,
-                          Colors.orange,
-                          Colors.brown,
-                          Colors.pink
-                        ]),
-                      ],
-                    ),
+                Container(
+                  height: 300, // Limit the height for scrolling cards
+                  child: ListView(
+                    scrollDirection: Axis.horizontal, // Scroll horizontally
+                    children: [
+                      _buildSuggestionCard(
+                          'assets/image1.png', 'Card 1', 'Label 1'),
+                      _buildSuggestionCard(
+                          'assets/image2.jpg', 'Card 2', 'Label 2'),
+                      _buildSuggestionCard(
+                          'assets/image3.jpg', 'Card 3', 'Label 3'),
+                      _buildSuggestionCard(
+                          'assets/image4.jpg', 'Card 4', 'Label 4'),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(10),
-                child: Text(
-                  "Suggestion",
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Container(
-                height: 300, // Limit the height for scrolling cards
-                child: ListView(
-                  scrollDirection: Axis.horizontal, // Scroll horizontally
-                  children: [
-                    _buildSuggestionCard(
-                        'assets/image1.png', 'Card 1', 'Label 1'),
-                    _buildSuggestionCard(
-                        'assets/image2.jpg', 'Card 2', 'Label 2'),
-                    _buildSuggestionCard(
-                        'assets/image3.jpg', 'Card 3', 'Label 3'),
-                    _buildSuggestionCard(
-                        'assets/image4.jpg', 'Card 4', 'Label 4'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
