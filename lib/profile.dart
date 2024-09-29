@@ -1,5 +1,6 @@
 import 'dart:convert'; // ใช้สำหรับการแปลง JSON
 import 'package:flutter/material.dart';
+import 'package:rubhew/edit_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
 import 'package:http/http.dart' as http; // ใช้สำหรับการดึงข้อมูลจาก API
 import 'package:rubhew/main.dart'; // Import MainScreen หรือหน้าแรกที่ต้องการ
@@ -119,13 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onPressed: () {
               // Help icon functionality
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: () {
-              // Save functionality
-            },
-          ),
+          )
         ],
       ),
       body: Container(
@@ -174,9 +169,36 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: 'Email         ',
                 value: email, // แสดงข้อมูลที่ดึงมา
               ),
+              ProfileDetailRow(
+                icon: Icons.home,
+                label: 'Address     ',
+                value: address, // แสดงข้อมูลที่ดึงมา
+              ),
               const SizedBox(height: 50),
 
-              // ปุ่ม Logout
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const EditProfilePage()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 255, 184, 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 100, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: const Text('Edit Profile',
+                    style: TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontSize: 18)),
+              ),
+
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   _logout(context); // เรียกใช้ฟังก์ชัน logout
@@ -193,7 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: TextStyle(
                         color: Color.fromARGB(255, 255, 255, 255),
                         fontSize: 18)),
-              ),
+              )
             ],
           ),
         ),
@@ -218,17 +240,35 @@ class ProfileDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.orange),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              '$label: $value',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white, // สีพื้นหลัง
+          borderRadius: BorderRadius.circular(10), // ทำให้ขอบกล่องโค้งมน
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5), // สีเงา
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3), // การเยื้องของเงา
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.orange),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                '$label: $value',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
