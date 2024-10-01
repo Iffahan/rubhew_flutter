@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                 ),
-                Container(
+                SizedBox(
                   height: 300, // Limit the height for scrolling cards
                   child: ListView(
                     scrollDirection: Axis.horizontal, // Scroll horizontally
@@ -234,7 +234,7 @@ class _HomePageState extends State<HomePage> {
 class CircleShape extends StatelessWidget {
   final Color color;
 
-  const CircleShape({Key? key, required this.color}) : super(key: key);
+  const CircleShape({super.key, required this.color});
 
   @override
   Widget build(BuildContext context) {

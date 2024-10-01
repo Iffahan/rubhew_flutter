@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http; // ใช้สำหรับการ
 import 'package:rubhew/main.dart'; // Import MainScreen หรือหน้าแรกที่ต้องการ
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -29,60 +29,58 @@ class _ProfilePageState extends State<ProfilePage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token'); // ดึง token ที่เก็บไว้
 
-    if (token != null) {
-      try {
-        final response = await http.get(
-          Uri.parse(
-              'http://10.0.2.2:8000/profiles/me'), // เปลี่ยน URL ของ API ที่ถูกต้อง
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:8000/profiles/me'), // เปลี่ยน URL ของ API ที่ถูกต้อง
 
-          headers: {
-            'Authorization': 'Bearer $token', // ส่ง token ไปด้วยใน header
-          },
-        );
+        headers: {
+          'Authorization': 'Bearer $token', // ส่ง token ไปด้วยใน header
+        },
+      );
 
-        if (response.statusCode == 200) {
-          // แปลงข้อมูล JSON เป็น Map
-          final data = json.decode(response.body);
-          print(data);
-          setState(() {
-            gender = data['gender'];
-            address = data['address'];
-            phone = data['phoneNumber'];
-            birthDate = data['birthday'];
-          });
-        } else {
-          // Handle error
-          print("Failed to load profile data");
-        }
-      } catch (e) {
-        print("Error: $e");
+      if (response.statusCode == 200) {
+        // แปลงข้อมูล JSON เป็น Map
+        final data = json.decode(response.body);
+        print(data);
+        setState(() {
+          gender = data['gender'];
+          address = data['address'];
+          phone = data['phoneNumber'];
+          birthDate = data['birthday'];
+        });
+      } else {
+        // Handle error
+        print("Failed to load profile data");
       }
-      //------------------------------------------------------------------------------------------------
-      try {
-        final response_user = await http.get(
-          Uri.parse(
-              'http://10.0.2.2:8000/users/me'), // เปลี่ยน URL ของ API ที่ถูกต้อง
+    } catch (e) {
+      print("Error: $e");
+    }
+    //------------------------------------------------------------------------------------------------
+    try {
+      final response_user = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:8000/users/me'), // เปลี่ยน URL ของ API ที่ถูกต้อง
 
-          headers: {
-            'Authorization': 'Bearer $token', // ส่ง token ไปด้วยใน header
-          },
-        );
+        headers: {
+          'Authorization': 'Bearer $token', // ส่ง token ไปด้วยใน header
+        },
+      );
 
-        if (response_user.statusCode == 200) {
-          // แปลงข้อมูล JSON เป็น Map
-          final data = json.decode(response_user.body);
-          print(data);
-          setState(() {
-            email = data['email'];
-            username = data['username'];
-          });
-        } else {
-          // Handle error
-          print("Failed to load profile data");
-        }
-      } catch (e) {
-        print("Error: $e");
+      if (response_user.statusCode == 200) {
+        // แปลงข้อมูล JSON เป็น Map
+        final data = json.decode(response_user.body);
+        print(data);
+        setState(() {
+          email = data['email'];
+          username = data['username'];
+        });
+      } else {
+        // Handle error
+        print("Failed to load profile data");
       }
+    } catch (e) {
+      print("Error: $e");
     }
   }
 
@@ -230,11 +228,11 @@ class ProfileDetailRow extends StatelessWidget {
   final String value;
 
   const ProfileDetailRow({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

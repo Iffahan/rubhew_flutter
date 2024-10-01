@@ -130,7 +130,7 @@ class _FeedPageState extends State<FeedPage> {
 class Funca extends StatelessWidget {
   final Map<String, dynamic> item; // Data type for the feed item
 
-  const Funca({Key? key, required this.item}) : super(key: key);
+  const Funca({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +168,7 @@ class Funca extends StatelessWidget {
                   width: MediaQuery.of(context).size.width * 0.8,
                   height: MediaQuery.of(context).size.width * 0.8,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [
                         Colors.black54,
                         Colors.transparent,
@@ -216,7 +216,7 @@ class Funca extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30.0),
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.red,
                     ),
@@ -253,7 +253,7 @@ class Funca extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30.0),
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.green,
                     ),
