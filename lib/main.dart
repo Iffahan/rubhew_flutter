@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 import 'package:rubhew/profile.dart';
 import 'home_page.dart';
 import 'feed_page.dart';
@@ -14,8 +15,11 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: MainScreen(),
+    return MaterialApp(
+      theme: ThemeData(
+        textTheme: GoogleFonts.promptTextTheme(), // Set GoogleFonts
+      ),
+      home: const MainScreen(),
     );
   }
 }
@@ -35,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
     FeedPage(),
     NotificationPage(),
     MePage(),
-    ProfilePage()
+    ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
