@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rubhew/change_password.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -175,6 +176,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   child: const Text(
                     'Save Profile',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ChangePasswordScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 2, 48, 71),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 100, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                  child: const Text(
+                    'Change Password',
                     style: TextStyle(
                       color: Color.fromARGB(255, 255, 255, 255),
                       fontSize: 18,

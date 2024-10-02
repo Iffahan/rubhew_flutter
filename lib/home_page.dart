@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF219EBC),
         title: const Text('Home'),
         actions: [
           IconButton(
@@ -84,7 +85,13 @@ class _HomePageState extends State<HomePage> {
             Container(
               width: screenWidth,
               height: 130,
-              color: const Color.fromARGB(255, 255, 132, 132),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF219EBC), Color(0xFF8ECAE6)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
