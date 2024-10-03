@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:rubhew/main.dart';
+import 'package:rubhew/register_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatelessWidget {
@@ -235,7 +236,13 @@ class LoginPage extends StatelessWidget {
                 children: [
                   const Text('Don’t have an account? '),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const RegisterPage()),
+                      );
+                    },
                     child: const Text('Register',
                         style: TextStyle(color: Colors.blue)),
                   ),

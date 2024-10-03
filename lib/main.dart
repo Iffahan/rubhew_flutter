@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
-import 'package:rubhew/profile.dart';
-import 'home_page.dart';
+import 'package:rubhew/follower_page.dart';
 import 'feed_page.dart';
 import 'notification_page.dart';
 import 'me_page.dart';
@@ -35,11 +34,11 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   static const List<Widget> _pages = <Widget>[
-    HomePage(),
+    // HomePage(),
     FeedPage(),
+    MyFollowerPage(),
     NotificationPage(),
     MePage(),
-    ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
