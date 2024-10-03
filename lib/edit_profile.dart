@@ -3,6 +3,8 @@ import 'package:rubhew/change_password.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({Key? key}) : super(key: key);
@@ -19,6 +21,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String phoneNumber = "";
   String email = "";
   String address = "";
+  String profileImage = "";
+  File? _imageFile;
 
   @override
   void initState() {
@@ -45,6 +49,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             address = data['address'];
             birthDate = data['birthday'];
             phoneNumber = data['phoneNumber'];
+            profileImage = data['profile_image'];
           });
         }
 
@@ -68,14 +73,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!
-          .save(); // บันทึกค่าจากฟิลด์ทั้งหมดก่อนที่จะส่งไปยังเซิร์ฟเวอร์
+      _formKey.currentState!.save();
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('token');
 
       if (token != null) {
         try {
+          String? base64Image;
+          if (_imageFile != null) {
+            List<int> imageBytes = await _imageFile!.readAsBytes();
+            base64Image = base64Encode(imageBytes);
+          }
+
           final response = await http.put(
             Uri.parse('http://10.0.2.2:8000/profiles/updateMyprofile'),
             headers: {
@@ -87,6 +97,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               'birthday': birthDate,
               'phoneNumber': phoneNumber,
               'address': address,
+              'profile_image': base64Image ?? profileImage, // Send the image
             }),
           );
 
@@ -100,6 +111,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
           print("Error saving profile: $e");
         }
       }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
     }
   }
 
@@ -130,7 +151,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             key: _formKey,
             child: ListView(
               children: [
-                // Username (Read-Only)
+                _buildProfileImage(),
                 _buildProfileDetailRow(
                   icon: Icons.person,
                   label: 'Username',
@@ -138,32 +159,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   readOnly: true,
                 ),
                 _buildProfileDetailRow(
-                  icon: Icons.person,
+                  icon: Icons.email,
                   label: 'Email',
                   value: email,
                   readOnly: true,
                 ),
-                // Gender (Dropdown Selection)
                 _buildGenderDropdown(),
-
-                // Birth Date
                 _buildBirthdayField(),
-
                 _buildEditableField(
                   label: 'Phone Number',
                   value: phoneNumber,
-                  onSaved: (value) =>
-                      phoneNumber = value!, // บันทึกค่าที่ถูกกรอก
+                  onSaved: (value) => phoneNumber = value!,
                 ),
-
                 _buildEditableField(
                   label: 'Address',
                   value: address,
-                  onSaved: (value) => address = value!, // บันทึกค่าที่ถูกกรอก
+                  onSaved: (value) => address = value!,
                 ),
                 const SizedBox(height: 20),
-
-                // Save Button
                 ElevatedButton(
                   onPressed: _saveProfile,
                   style: ElevatedButton.styleFrom(
@@ -211,6 +224,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileImage() {
+    return GestureDetector(
+      onTap: _pickImage, // Open the image picker
+      child: CircleAvatar(
+        radius: 50,
+        backgroundImage: _imageFile != null
+            ? FileImage(_imageFile!)
+            : (profileImage.isNotEmpty
+                ? NetworkImage(profileImage) as ImageProvider
+                : const AssetImage('assets/default_profile.png')),
+        child: _imageFile == null
+            ? const Icon(
+                Icons.camera_alt,
+                size: 50,
+                color: Colors.white,
+              )
+            : null,
       ),
     );
   }

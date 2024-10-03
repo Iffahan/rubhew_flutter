@@ -1,4 +1,5 @@
-import 'dart:convert'; // ใช้สำหรับการแปลง JSON
+import 'dart:convert'; // ใช้สำหรับการแปลง Base64
+import 'dart:typed_data'; // สำหรับการจัดการกับ ByteData
 import 'package:flutter/material.dart';
 import 'package:rubhew/edit_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
@@ -19,6 +20,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String birthDate = "";
   String gender = "";
   String address = "";
+  String profileImage = "";
+
   @override
   void initState() {
     super.initState();
@@ -33,7 +36,6 @@ class _ProfilePageState extends State<ProfilePage> {
       final response = await http.get(
         Uri.parse(
             'http://10.0.2.2:8000/profiles/me'), // เปลี่ยน URL ของ API ที่ถูกต้อง
-
         headers: {
           'Authorization': 'Bearer $token', // ส่ง token ไปด้วยใน header
         },
@@ -48,6 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
           address = data['address'];
           phone = data['phoneNumber'];
           birthDate = data['birthday'];
+          profileImage = data['profile_image'];
         });
       } else {
         // Handle error
@@ -56,12 +59,11 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print("Error: $e");
     }
-    //------------------------------------------------------------------------------------------------
+
     try {
       final response_user = await http.get(
         Uri.parse(
             'http://10.0.2.2:8000/users/me'), // เปลี่ยน URL ของ API ที่ถูกต้อง
-
         headers: {
           'Authorization': 'Bearer $token', // ส่ง token ไปด้วยใน header
         },
@@ -98,6 +100,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // ตรวจสอบว่า profileImage มีค่า base64 หรือไม่
+    Uint8List? imageBytes;
+    if (profileImage.isNotEmpty) {
+      imageBytes =
+          base64Decode(profileImage.split(',').last); // แปลง base64 เป็นไบต์
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile Page'),
@@ -137,7 +146,15 @@ class _ProfilePageState extends State<ProfilePage> {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.grey[200],
-                child: Icon(Icons.person, size: 60, color: Colors.grey[800]),
+                backgroundImage: imageBytes != null
+                    ? MemoryImage(
+                        imageBytes) // แสดงภาพจาก Base64 ที่ถูกแปลงแล้ว
+                    : null, // ถ้าไม่มี base64 ให้แสดงเป็นไอคอน
+                child: imageBytes == null
+                    ? Icon(Icons.person,
+                        size: 60,
+                        color: Colors.grey[800]) // ถ้าไม่มีภาพให้แสดงไอคอน
+                    : null,
               ),
               const SizedBox(height: 20),
 
