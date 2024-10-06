@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
-import 'package:rubhew/follower_page.dart';
+import 'package:rubhew/item_page.dart';
 import 'feed_page.dart';
 import 'notification_page.dart';
 import 'me_page.dart';
@@ -36,7 +36,7 @@ class _MainScreenState extends State<MainScreen> {
   static const List<Widget> _pages = <Widget>[
     // HomePage(),
     FeedPage(),
-    MyFollowerPage(),
+    MyPostPage(),
     NotificationPage(),
     MePage(),
   ];

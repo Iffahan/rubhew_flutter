@@ -109,18 +109,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile Page'),
-        backgroundColor: const Color(0xFF219EBC),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Navigate back to HomePage or another page
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const MainScreen()),
-            );
-          },
+        title: const Text(
+          'Profile Page',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        backgroundColor: const Color(0xFF219EBC),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
@@ -161,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Profile Details
               ProfileDetailRow(
                 icon: Icons.person,
-                label: 'Username  ',
+                label: 'Username    ',
                 value: username, // แสดงข้อมูลที่ดึงมา
               ),
               ProfileDetailRow(
@@ -171,7 +167,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               ProfileDetailRow(
                 icon: Icons.calendar_today,
-                label: 'Birth Date  ',
+                label: 'Birth Date   ',
                 value: birthDate, // แสดงข้อมูลที่ดึงมา
               ),
               ProfileDetailRow(

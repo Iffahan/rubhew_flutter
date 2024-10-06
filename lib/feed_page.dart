@@ -72,14 +72,14 @@ class _FeedPageState extends State<FeedPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Feed Page'),
-        backgroundColor: const Color(0xFF219EBC),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // Go back to the previous page
-          },
+        title: const Text(
+          'Feed Page',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        backgroundColor: const Color(0xFF219EBC),
         actions: [
           IconButton(
             icon: const Icon(Icons.error_outline), // Exclamation mark button

@@ -53,6 +53,8 @@ class _RegisterPageState extends State<RegisterPage> {
           context,
           MaterialPageRoute(builder: (context) => const MainScreen()),
         );
+      } else if (response.statusCode == 409) {
+        _showErrorDialog('User or email is already exists');
       } else {
         // Handle API errors
         print('Registration failed: ${response.body}');
@@ -85,7 +87,6 @@ class _RegisterPageState extends State<RegisterPage> {
         _confirmPasswordController.text.trim(),
       );
     }
-    Navigator.of(context).pop();
   }
 
   @override
@@ -403,6 +404,26 @@ class _RegisterPageState extends State<RegisterPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

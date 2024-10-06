@@ -60,7 +60,14 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Login'), backgroundColor: const Color(0xFF219EBC)),
+          title: const Text(
+            'Login',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: const Color(0xFF219EBC)),
       // Background color similar to the design
       body: Container(
         decoration: const BoxDecoration(

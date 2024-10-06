@@ -52,21 +52,22 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Follower'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        title: const Text(
+          'My Follower',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {},
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyFollowerPage()),
+              );
+            },
           ),
         ],
       ),
@@ -75,52 +76,13 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'My Follower',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Search my items...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-            ),
             const SizedBox(height: 20),
             _buildCategorySection(),
             const SizedBox(height: 20),
             _buildTagSection(),
             const SizedBox(height: 20),
-            _buildKeywordSection(),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: '',
-          ),
-        ],
       ),
     );
   }
@@ -176,36 +138,6 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
                     selectedTags.add(tag);
                   } else {
                     selectedTags.remove(tag);
-                  }
-                });
-              },
-              selectedColor: Colors.lightGreenAccent,
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildKeywordSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Keyword', style: TextStyle(fontSize: 18)),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          children: keywords.map((keyword) {
-            bool isSelected = selectedTags.contains(keyword);
-            return FilterChip(
-              label: Text(keyword),
-              selected: isSelected,
-              onSelected: (bool selected) {
-                setState(() {
-                  if (selected) {
-                    selectedTags.add(keyword);
-                  } else {
-                    selectedTags.remove(keyword);
                   }
                 });
               },
