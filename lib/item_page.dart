@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rubhew/add_item_page.dart';
 import 'package:rubhew/follower_page.dart';
 
 class MyPostPage extends StatelessWidget {
@@ -21,6 +22,15 @@ class MyPostPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const MyFollowerPage()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddPostPage()),
               );
             },
           ),
@@ -53,7 +63,7 @@ class MyPostPage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2, // Two items per row
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
@@ -67,7 +77,7 @@ class MyPostPage extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          image: DecorationImage(
+                          image: const DecorationImage(
                             image: AssetImage(
                                 'assets/shoes.jpg'), // Replace with dynamic images
                             fit: BoxFit.cover,
@@ -76,14 +86,14 @@ class MyPostPage extends StatelessWidget {
                         alignment: Alignment.bottomCenter,
                         child: Container(
                           padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.black54,
                             borderRadius: BorderRadius.only(
                               bottomLeft: Radius.circular(10),
                               bottomRight: Radius.circular(10),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Converse all star สีขาว',
                             style: TextStyle(color: Colors.white),
                           ),
@@ -97,7 +107,7 @@ class MyPostPage extends StatelessWidget {
                           onTap: () {
                             // Handle edit action
                           },
-                          child: Icon(Icons.edit, color: Colors.white),
+                          child: const Icon(Icons.edit, color: Colors.white),
                         ),
                       ),
                     ],
