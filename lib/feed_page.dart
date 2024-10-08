@@ -68,8 +68,22 @@ class _FeedPageState extends State<FeedPage> {
     },
   ];
 
+  int currentIndex = 0; // Index to track the currently displayed item
+
+  // Function to go to the next item when X button is pressed
+  void _showNextItem() {
+    setState(() {
+      if (currentIndex < items.length - 1) {
+        currentIndex++;
+      } else {
+        currentIndex = 0; // Reset to first item after the last item
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentItem = items[currentIndex]; // Get the current item
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -113,11 +127,13 @@ class _FeedPageState extends State<FeedPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Center(
-              child: PageView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  return Funca(item: items[index]);
-                },
+              child: AnimatedSwitcher(
+                duration: const Duration(
+                    milliseconds: 500), // Set the animation duration
+                child: Funca(
+                    key: ValueKey<int>(currentIndex),
+                    item: currentItem,
+                    onNext: _showNextItem),
               ),
             ),
           ),
@@ -129,8 +145,9 @@ class _FeedPageState extends State<FeedPage> {
 
 class Funca extends StatelessWidget {
   final Map<String, dynamic> item; // Data type for the feed item
+  final VoidCallback onNext; // Callback to show next item
 
-  const Funca({super.key, required this.item});
+  const Funca({super.key, required this.item, required this.onNext});
 
   @override
   Widget build(BuildContext context) {
@@ -222,9 +239,8 @@ class Funca extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () {
-                        // Functionality to remove or reject the item
-                      },
+                      onPressed:
+                          onNext, // Call the onNext function to show next item
                     ),
                   ),
                 ),
