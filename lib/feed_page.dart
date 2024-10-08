@@ -81,6 +81,78 @@ class _FeedPageState extends State<FeedPage> {
     });
   }
 
+  void _showMessagePopup(BuildContext context, String merchant) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ), // Adjusts for keyboard
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Send a message to $merchant',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        Navigator.pop(
+                            context); // Close the modal when "X" is pressed
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Type your message',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3, // Allows multi-line messages
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(
+                            context); // Close the modal when "Cancel" is pressed
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Simulate sending the message
+                        Navigator.pop(
+                            context); // Close the modal after "sending"
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Message sent to $merchant!')),
+                        );
+                      },
+                      child: const Text('Send'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentItem = items[currentIndex]; // Get the current item
@@ -131,9 +203,12 @@ class _FeedPageState extends State<FeedPage> {
                 duration: const Duration(
                     milliseconds: 500), // Set the animation duration
                 child: Funca(
-                    key: ValueKey<int>(currentIndex),
-                    item: currentItem,
-                    onNext: _showNextItem),
+                  key: ValueKey<int>(currentIndex),
+                  item: currentItem,
+                  onNext: _showNextItem,
+                  onShowMessagePopup: () =>
+                      _showMessagePopup(context, currentItem['merchant']),
+                ),
               ),
             ),
           ),
@@ -146,8 +221,15 @@ class _FeedPageState extends State<FeedPage> {
 class Funca extends StatelessWidget {
   final Map<String, dynamic> item; // Data type for the feed item
   final VoidCallback onNext; // Callback to show next item
+  final VoidCallback
+      onShowMessagePopup; // Callback for showing the message popup
 
-  const Funca({super.key, required this.item, required this.onNext});
+  const Funca({
+    super.key,
+    required this.item,
+    required this.onNext,
+    required this.onShowMessagePopup,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -276,9 +358,8 @@ class Funca extends StatelessWidget {
                     child: IconButton(
                       icon: const Icon(Icons.favorite_border,
                           color: Colors.white),
-                      onPressed: () {
-                        // Functionality to favorite the item
-                      },
+                      onPressed:
+                          onShowMessagePopup, // Show message popup when heart button is pressed
                     ),
                   ),
                 ),
