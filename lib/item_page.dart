@@ -1,9 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:rubhew/add_item_page.dart';
 import 'package:rubhew/follower_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rubhew/login_page.dart'; // Import หน้า Login ของคุณ
 
-class MyPostPage extends StatelessWidget {
+class MyPostPage extends StatefulWidget {
   const MyPostPage({super.key});
+
+  @override
+  _MyPostPageState createState() => _MyPostPageState();
+}
+
+class _MyPostPageState extends State<MyPostPage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkToken(); // ตรวจสอบ token เมื่อ widget ถูกสร้างขึ้น
+  }
+
+  Future<void> _checkToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    if (token == null || token.isEmpty) {
+      // ถ้าไม่มี token ให้ route ไปที่หน้า Login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LoginPage()), // หน้า Login ของคุณ
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,7 +63,6 @@ class MyPostPage extends StatelessWidget {
           ),
         ],
       ),
-
       body: Column(
         children: [
           // Search Bar
@@ -118,7 +144,6 @@ class MyPostPage extends StatelessWidget {
           ),
         ],
       ),
-      // Bottom navigation (reuse your custom BottomNavWidget)
     );
   }
 }
