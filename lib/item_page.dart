@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:rubhew/add_item_page.dart';
 import 'package:rubhew/follower_page.dart';
+import 'package:rubhew/main.dart';
+import 'package:rubhew/me_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rubhew/login_page.dart'; // Import หน้า Login ของคุณ
 
@@ -26,7 +28,7 @@ class _MyPostPageState extends State<MyPostPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (context) => LoginPage()), // หน้า Login ของคุณ
+            builder: (context) => const MePage()), // หน้า Login ของคุณ
       );
     }
   }
