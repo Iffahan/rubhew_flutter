@@ -157,7 +157,7 @@ class _AddPostPageState extends State<AddPostPage> {
       "category_id": int.tryParse(_selectedCategory ?? '0') ?? 0,
       "detail": additionalFieldsMap,
       "images": base64Images,
-      "status": false,
+      "status": "Available",
     };
 
     try {

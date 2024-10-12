@@ -1,10 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:rubhew/add_item_page.dart';
-import 'package:rubhew/follower_page.dart';
-import 'package:rubhew/main.dart';
-import 'package:rubhew/me_page.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:rubhew/login_page.dart'; // Import หน้า Login ของคุณ
 
 class MyPostPage extends StatefulWidget {
   const MyPostPage({super.key});
@@ -14,22 +11,35 @@ class MyPostPage extends StatefulWidget {
 }
 
 class _MyPostPageState extends State<MyPostPage> {
+  List<dynamic> items = []; // Store fetched items here
+
   @override
   void initState() {
     super.initState();
-    _checkToken(); // ตรวจสอบ token เมื่อ widget ถูกสร้างขึ้น
+    fetchUserItems(); // Fetch items when the page loads
   }
 
-  Future<void> _checkToken() async {
+  Future<void> fetchUserItems() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    if (token == null || token.isEmpty) {
-      // ถ้าไม่มี token ให้ route ไปที่หน้า Login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const MePage()), // หน้า Login ของคุณ
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:8000/items/my-items/'), // Adjust your API URL here
+        headers: {
+          'Authorization': 'Bearer $token', // Replace with your auth token
+        },
       );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          items = json.decode(response.body); // Decode and save the items
+        });
+      } else {
+        print('Failed to load items');
+      }
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -39,35 +49,26 @@ class _MyPostPageState extends State<MyPostPage> {
       appBar: AppBar(
         title: const Text(
           'My Post',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MyFollowerPage()),
-              );
+              // Notification page navigation
             },
           ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddPostPage()),
-              );
+              // Add post navigation
             },
           ),
         ],
       ),
       body: Column(
         children: [
-          // Search Bar
+          // Search bar remains unchanged
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
@@ -92,50 +93,84 @@ class _MyPostPageState extends State<MyPostPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Two items per row
+                  crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: 0.8, // Adjust for image ratio
+                  childAspectRatio: 0.8,
                 ),
-                itemCount: 2, // Replace with your dynamic item count
+                itemCount: items.length,
                 itemBuilder: (context, index) {
+                  var item = items[index];
+                  String status =
+                      item['status'] ?? 'Unknown'; // รับสถานะจาก item
+                  Color statusColor;
+
+                  // กำหนดสีพื้นหลังตามสถานะ
+                  switch (status.toLowerCase()) {
+                    case 'available':
+                      statusColor = const Color(0xFF73EC8B); // สีเขียว
+                      break;
+                    case 'sold':
+                      statusColor = const Color(0xFF982B1C); // สีแดง
+                      break;
+                    case 'progress':
+                      statusColor = const Color(0xFFFFB22C); // สีเหลือง
+                      break;
+                    default:
+                      statusColor =
+                          Colors.black54; // สีเริ่มต้นถ้าไม่ตรงกับเงื่อนไข
+                  }
+
                   return Stack(
                     children: [
-                      // Item card
+                      // การ์ดรายการที่มีภาพ
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          image: const DecorationImage(
-                            image: AssetImage(
-                                'assets/shoes.jpg'), // Replace with dynamic images
-                            fit: BoxFit.cover,
-                          ),
+                          image: item['images'] != null &&
+                                  item['images'].isNotEmpty
+                              ? DecorationImage(
+                                  image:
+                                      NetworkImage(item['images'][0]), // ภาพแรก
+                                  fit: BoxFit.cover,
+                                )
+                              : const DecorationImage(
+                                  image: AssetImage(
+                                      'assets/NoImage.png'), // ภาพเริ่มต้น
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                         alignment: Alignment.bottomCenter,
-                        child: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(10),
-                              bottomRight: Radius.circular(10),
-                            ),
-                          ),
-                          child: const Text(
-                            'Converse all star สีขาว',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
                       ),
-                      // Edit icon
+                      // ไอคอนแก้ไข
                       Positioned(
                         top: 8,
                         right: 8,
                         child: GestureDetector(
                           onTap: () {
-                            // Handle edit action
+                            // จัดการกับการแก้ไข
                           },
                           child: const Icon(Icons.edit, color: Colors.white),
+                        ),
+                      ),
+                      // พื้นหลังสถานะครอบคลุมทั้งการ์ด
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          color: statusColor
+                              .withOpacity(0.7), // สีพื้นหลังตามสถานะ
+                          padding: const EdgeInsets.all(8.0),
+                          child: const Text(
+                            'Available', // สามารถแก้ไขเป็นข้อความที่คุณต้องการแสดง
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center, // จัดกลางข้อความ
+                          ),
                         ),
                       ),
                     ],
