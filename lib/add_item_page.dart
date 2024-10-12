@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:rubhew/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AddPostPage extends StatefulWidget {
@@ -107,6 +108,27 @@ class _AddPostPageState extends State<AddPostPage> {
     });
   }
 
+  void _showDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> postItem() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -118,6 +140,8 @@ class _AddPostPageState extends State<AddPostPage> {
       String base64Image = base64Encode(file.readAsBytesSync());
       base64Images.add(base64Image);
     }
+
+    print("Base64 Images: $base64Images"); // ตรวจสอบว่า base64 ถูกแปลงแล้ว
 
     // Prepare additional fields
     Map<String, dynamic> additionalFieldsMap = {};
@@ -132,8 +156,8 @@ class _AddPostPageState extends State<AddPostPage> {
       "price": double.tryParse(_priceController.text) ?? 0.0,
       "category_id": int.tryParse(_selectedCategory ?? '0') ?? 0,
       "detail": additionalFieldsMap,
-      "image": base64Images,
-      "state": false,
+      "images": base64Images,
+      "status": false,
     };
 
     try {
@@ -147,11 +171,15 @@ class _AddPostPageState extends State<AddPostPage> {
       );
 
       if (response.statusCode == 201) {
+        print(itemData);
         print("Item posted successfully");
+        _showDialog("Success", "Item posted successfully!");
+
         final responseData = json.decode(response.body);
         print(responseData); // Display the response from API
       } else {
         print("Failed to post item: ${response.statusCode}");
+        _showDialog("Failed", "Failed to post item: ${response.statusCode}");
       }
     } catch (e) {
       print("Error posting item: $e");
@@ -299,12 +327,12 @@ class _AddPostPageState extends State<AddPostPage> {
                 ),
                 const SizedBox(height: 10),
                 // Display additional fields dynamically
-                for (int i = 0; i < _additionalFields.length; i++)
+                for (int i = 0; i < _additionalFields.length; i++) ...[
                   _buildAdditionalField(i),
-                const SizedBox(height: 20),
-                // Description field
-                _buildTextField('Description', _descriptionController,
-                    isDescription: true),
+                  const SizedBox(height: 10), // Add space between fields
+                ],
+                // Description text field
+                _buildTextField('Description', _descriptionController),
                 const SizedBox(height: 20),
                 // Post button
                 Center(
@@ -315,7 +343,7 @@ class _AddPostPageState extends State<AddPostPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 100, vertical: 15),
                     ),
-                    child: const Text('Post',
+                    child: const Text('Post Item',
                         style: TextStyle(fontSize: 18, color: Colors.black)),
                   ),
                 ),
@@ -327,48 +355,54 @@ class _AddPostPageState extends State<AddPostPage> {
     );
   }
 
-  Widget _buildTextField(String hint, TextEditingController controller,
-      {bool isPrice = false, bool isDescription = false}) {
+  // Helper method to build text fields
+  Widget _buildTextField(String label, TextEditingController controller,
+      {bool isPrice = false}) {
     return TextField(
       controller: controller,
+      keyboardType: isPrice ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
-        hintText: hint,
-        border: OutlineInputBorder(),
-        filled: true, // Enable filled background
-        fillColor: Colors.white, // Set the background color to white
+        labelText: label,
+        border: const OutlineInputBorder(),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+        filled: true, // Enable filled background
+        fillColor: Colors.white, // Set the background color to white
       ),
-      keyboardType: isPrice ? TextInputType.number : TextInputType.text,
-      maxLines: isDescription ? 5 : 1,
     );
   }
 
+  // Helper method to build additional fields dynamically
   Widget _buildAdditionalField(int index) {
     String key = _additionalFields[index].keys.first;
     String value = _additionalFields[index][key] ?? '';
 
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: TextField(
-            onChanged: (val) => _updateFieldValue(index, val),
-            decoration: InputDecoration(
-              labelText: key,
-              border: OutlineInputBorder(),
-              filled: true, // Enable filled background
-              fillColor: Colors.white, // Set the background color to white
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                onChanged: (val) => _updateFieldValue(index, val),
+                decoration: InputDecoration(
+                  labelText: key,
+                  border: const OutlineInputBorder(),
+                  filled: true, // Enable filled background
+                  fillColor: Colors.white, // Set the background color to white
+                ),
+              ),
             ),
-          ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () {
+                setState(() {
+                  _additionalFields.removeAt(index);
+                });
+              },
+            ),
+          ],
         ),
-        IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () {
-            setState(() {
-              _additionalFields.removeAt(index);
-            });
-          },
-        ),
+        const SizedBox(height: 5), // Add spacing here between additional fields
       ],
     );
   }
