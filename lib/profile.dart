@@ -61,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     try {
-      final response_user = await http.get(
+      final responseUser = await http.get(
         Uri.parse(
             'http://10.0.2.2:8000/users/me'), // เปลี่ยน URL ของ API ที่ถูกต้อง
         headers: {
@@ -69,9 +69,9 @@ class _ProfilePageState extends State<ProfilePage> {
         },
       );
 
-      if (response_user.statusCode == 200) {
+      if (responseUser.statusCode == 200) {
         // แปลงข้อมูล JSON เป็น Map
-        final data = json.decode(response_user.body);
+        final data = json.decode(responseUser.body);
         print(data);
         setState(() {
           email = data['email'];

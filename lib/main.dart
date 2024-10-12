@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
-import 'package:rubhew/item_page.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 import 'feed_page.dart';
 import 'notification_page.dart';
 import 'me_page.dart';
+import 'item_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -32,14 +33,35 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  bool _hasToken = false; // Track if token exists
 
-  static const List<Widget> _pages = <Widget>[
-    // HomePage(),
+  // Pages that can be shown based on token
+  static const List<Widget> _basePages = <Widget>[
+    FeedPage(),
+    MePage(),
+  ];
+
+  // Pages with MyPostPage when token is available
+  static const List<Widget> _pagesWithMyPost = <Widget>[
     FeedPage(),
     MyPostPage(),
     NotificationPage(),
     MePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkToken(); // Check token when screen is initialized
+  }
+
+  Future<void> _checkToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    setState(() {
+      _hasToken = token != null; // If token exists, _hasToken is true
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -49,25 +71,30 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Select pages based on token existence
+    List<Widget> pages = _hasToken ? _pagesWithMyPost : _basePages;
+
     return Scaffold(
       body: Center(
-        child: _pages.elementAt(_selectedIndex),
+        child: pages.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
+        items: <BottomNavigationBarItem>[
+          const BottomNavigationBarItem(
             icon: Icon(Icons.feed),
             label: 'Feed',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
+          if (_hasToken)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'My Post',
+            ),
+          if (_hasToken)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Notifications',
+            ),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Me',
           ),
