@@ -13,7 +13,7 @@ class _FeedPageState extends State<FeedPage> {
     {
       'name': 'Stylish Shoes',
       'merchant': 'FashionHub',
-      'image': 'https://via.placeholder.com/300x200.png?text=Stylish+Shoes',
+      'image': 'https://via.placeholder.com/300x200.png?text=Stylish+Shoes+2',
       'description': 'These stylish shoes are perfect for everyday wear.',
       'price': '3,500 THB',
       'category': 'Footwear', // Single category
@@ -69,14 +69,25 @@ class _FeedPageState extends State<FeedPage> {
   ];
 
   int currentIndex = 0; // Index to track the currently displayed item
+  String searchQuery = ''; // Query for search
+  List<Map<String, dynamic>> filteredItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    filteredItems = items; // Initially show all items
+  }
 
   // Function to go to the next item when X button is pressed
   void _showNextItem() {
     setState(() {
-      if (currentIndex < items.length - 1) {
-        currentIndex++;
-      } else {
-        currentIndex = 0; // Reset to first item after the last item
+      if (filteredItems.isNotEmpty) {
+        // Only proceed if filteredItems is not empty
+        if (currentIndex < filteredItems.length - 1) {
+          currentIndex++;
+        } else {
+          currentIndex = 0; // Reset to first item after the last item
+        }
       }
     });
   }
@@ -153,27 +164,73 @@ class _FeedPageState extends State<FeedPage> {
     );
   }
 
+  // Function to handle search when enter or search button is pressed
+  void _performSearch() {
+    setState(() {
+      filteredItems = items
+          .where((item) =>
+              item['name']!.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
+
+      // Reset to the first item, and handle if no items are found
+      currentIndex = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentItem = items[currentIndex]; // Get the current item
+    final currentItem = filteredItems.isNotEmpty
+        ? filteredItems[currentIndex]
+        : {'name': 'No items found', 'merchant': '', 'image': ''};
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Feed Page',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          children: [
+            // Logo (Shopping Cart Icon)
+            const Icon(Icons.shopping_cart, color: Colors.white),
+            const SizedBox(width: 16),
+
+            // Search Bar
+            Expanded(
+              child: TextField(
+                onChanged: (value) {
+                  searchQuery = value; // Update search query
+                },
+                onSubmitted: (value) {
+                  _performSearch(); // Search when 'Enter' is pressed
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Search...',
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.search),
+                    onPressed: () {
+                      _performSearch(); // Search when search icon is pressed
+                    },
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            // Report Button
+            IconButton(
+              icon: const Icon(Icons.error_outline), // Exclamation mark button
+              onPressed: () {
+                // Report functionality
+              },
+            ),
+          ],
         ),
         backgroundColor: const Color(0xFF219EBC),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.error_outline), // Exclamation mark button
-            onPressed: () {
-              // Alert or information functionality
-            },
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -200,14 +257,13 @@ class _FeedPageState extends State<FeedPage> {
             padding: const EdgeInsets.all(16.0),
             child: Center(
               child: AnimatedSwitcher(
-                duration: const Duration(
-                    milliseconds: 500), // Set the animation duration
+                duration: const Duration(milliseconds: 500),
                 child: Funca(
                   key: ValueKey<int>(currentIndex),
                   item: currentItem,
                   onNext: _showNextItem,
                   onShowMessagePopup: () =>
-                      _showMessagePopup(context, currentItem['merchant']),
+                      _showMessagePopup(context, currentItem['merchant'] ?? ''),
                 ),
               ),
             ),
