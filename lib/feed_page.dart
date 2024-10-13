@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
@@ -9,7 +12,7 @@ class FeedPage extends StatefulWidget {
 
 class _FeedPageState extends State<FeedPage> {
   // Mock data for items
-  List<Map<String, dynamic>> items = [
+  List<Map<String, dynamic>> items_mock = [
     {
       'name': 'Stylish Shoes',
       'merchant': 'FashionHub',
@@ -68,6 +71,7 @@ class _FeedPageState extends State<FeedPage> {
     },
   ];
 
+  List<Map<String, dynamic>> items = [];
   int currentIndex = 0; // Index to track the currently displayed item
   String searchQuery = ''; // Query for search
   List<Map<String, dynamic>> filteredItems = [];
@@ -75,7 +79,42 @@ class _FeedPageState extends State<FeedPage> {
   @override
   void initState() {
     super.initState();
-    filteredItems = items; // Initially show all items
+    fetchItems(); // Fetch items from the API
+  }
+
+  // Function to fetch items from the API
+  Future<void> fetchItems() async {
+    final url = Uri.parse('http://10.0.2.2:8000/items');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+
+      // Map the fetched items to match the mock data format
+      items = data.map<Map<String, dynamic>>((item) {
+        return {
+          'name': item['name_item'] ?? 'Unknown',
+          'merchant': item['user_profile'] != null
+              ? item['user_profile']['username'] ?? 'Unknown Merchant'
+              : 'Unknown Merchant',
+          'image': item['images'].isNotEmpty ? item['images'][0] : '',
+          'description': item['description'] ?? 'No description available',
+          'price': '${item['price'] ?? 0} THB',
+          'category': item['category_details'] != null
+              ? item['category_details']['name_category'] ?? 'Unknown Category'
+              : 'Unknown Category',
+          'tags': List<String>.from(
+              item['tags'].map((tag) => tag['name_tags'] ?? '')),
+          'other': item['detail'] ?? {}, // Map the detail field to other
+        };
+      }).toList();
+
+      setState(() {
+        filteredItems = items; // Initially, show all items
+      });
+    } else {
+      print('Failed to load items: ${response.statusCode}');
+    }
   }
 
   // Function to go to the next item when X button is pressed
@@ -274,6 +313,12 @@ class _FeedPageState extends State<FeedPage> {
   }
 }
 
+ImageProvider<Object> _getImage(String imageBase64) {
+  // Decode base64 string into bytes and return as ImageProvider
+  Uint8List bytes = base64Decode(imageBase64);
+  return MemoryImage(bytes);
+}
+
 class Funca extends StatelessWidget {
   final Map<String, dynamic> item; // Data type for the feed item
   final VoidCallback onNext; // Callback to show next item
@@ -305,7 +350,10 @@ class Funca extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
                     image: DecorationImage(
-                      image: NetworkImage(item['image']!),
+                      image: (item['image'] != null && item['image'].isNotEmpty)
+                          ? _getImage(item['image']) // ถอดรหัส base64 จากภาพแรก
+                          : const AssetImage(
+                              'assets/NoImage.png'), // ภาพเริ่มต้น
                       fit: BoxFit.cover,
                     ),
                     boxShadow: const [
@@ -377,8 +425,7 @@ class Funca extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed:
-                          onNext, // Call the onNext function to show next item
+                      onPressed: onNext,
                     ),
                   ),
                 ),
