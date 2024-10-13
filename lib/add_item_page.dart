@@ -25,6 +25,7 @@ class _AddPostPageState extends State<AddPostPage> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  List<String> categories = [];
   // To hold fetched categories
   List<dynamic> _categories = [];
   String? _selectedCategory; // Selected category ID
