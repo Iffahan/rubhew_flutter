@@ -24,10 +24,10 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
     super.initState();
     _fetchCategories();
     _fetchTags();
-    _fetchProfile(); // Fetch profile data
+    _fetchProfile(); // ดึงข้อมูลโปรไฟล์
   }
 
-  // Fetch categories from API
+  // ฟังก์ชันเพื่อดึงข้อมูลหมวดหมู่จาก API
   Future<void> _fetchCategories() async {
     const String apiUrl = 'http://10.0.2.2:8000/categories/';
     try {
@@ -40,14 +40,14 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
               .toList();
         });
       } else {
-        throw Exception('Unable to fetch categories');
+        throw Exception('ไม่สามารถดึงข้อมูลหมวดหมู่ได้');
       }
     } catch (e) {
       print(e.toString());
     }
   }
 
-  // Fetch tags from API
+  // ฟังก์ชันเพื่อดึงข้อมูลแท็กจาก API
   Future<void> _fetchTags() async {
     const String apiUrl = 'http://10.0.2.2:8000/tags/';
     try {
@@ -58,14 +58,14 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
           tags = data.map((tag) => tag['name_tags'].toString()).toList();
         });
       } else {
-        throw Exception('Unable to fetch tags');
+        throw Exception('ไม่สามารถดึงข้อมูลแท็กได้');
       }
     } catch (e) {
       print(e.toString());
     }
   }
 
-  // Fetch profile from API
+  // ฟังก์ชันเพื่อดึงข้อมูลโปรไฟล์จาก API
   Future<void> _fetchProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -82,29 +82,29 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
 
-        // Update selected categories and tags based on profile data
+        // อัปเดตหมวดหมู่และแท็กที่เลือกโดยอ้างอิงจาก tag_following และ category_following
         setState(() {
           selectedCategoryIds = List<int>.from(data['category_following']);
           selectedTagIds = List<int>.from(data['tag_following']);
         });
       } else {
-        throw Exception('Unable to fetch profile');
+        throw Exception('ไม่สามารถดึงข้อมูลโปรไฟล์ได้');
       }
     } catch (e) {
       print(e.toString());
     }
   }
 
-  // Save selected categories and tags via PUT request
-  Future<void> _saveFollowing() async {
+  // ฟังก์ชันเพื่ออัปเดตข้อมูลแท็กและหมวดหมู่
+  Future<void> _updateFollowing() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     const String apiUrl = 'http://10.0.2.2:8000/profiles/updateMyFollowing';
 
-    final body = jsonEncode({
+    final body = {
       "tag_following": selectedTagIds,
-      "category_following": selectedCategoryIds
-    });
+      "category_following": selectedCategoryIds,
+    };
 
     try {
       final response = await http.put(
@@ -113,13 +113,13 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: body,
+        body: jsonEncode(body),
       );
 
       if (response.statusCode == 200) {
-        print('Following preferences updated successfully');
+        print('Updated successfully');
       } else {
-        throw Exception('Failed to update following preferences');
+        throw Exception('ไม่สามารถอัปเดตข้อมูลได้');
       }
     } catch (e) {
       print(e.toString());
@@ -128,39 +128,40 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        await _saveFollowing(); // Save the selected tags and categories
-        return true; // Allow the pop to proceed
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'My Follower',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            await _updateFollowing(); // เรียกใช้ฟังก์ชันอัปเดตก่อนกลับ
+            Navigator.of(context).pop(); // กลับไปยังหน้าก่อนหน้า
+          },
+        ),
+        title: const Text(
+          'My Follower',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              _buildCategorySection(), // Display categories
-              const SizedBox(height: 20),
-              _buildTagSection(), // Display tags
-              const SizedBox(height: 20),
-            ],
-          ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            _buildCategorySection(), // ส่วนหมวดหมู่
+            const SizedBox(height: 20),
+            _buildTagSection(), // ส่วนแท็ก
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
   }
 
-  // Build category section
+  // ฟังก์ชันสำหรับแสดงหมวดหมู่
   Widget _buildCategorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +176,7 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
                   int index = entry.key;
                   String category = entry.value;
                   bool isSelected = selectedCategoryIds
-                      .contains(index + 1); // Based on category_following
+                      .contains(index + 1); // อ้างอิงจาก category_following
 
                   return FilterChip(
                     label: Text(category),
@@ -197,7 +198,7 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
     );
   }
 
-  // Build tag section
+  // ฟังก์ชันสำหรับแสดงแท็ก
   Widget _buildTagSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +213,7 @@ class _MyFollowerPageState extends State<MyFollowerPage> {
                   int index = entry.key;
                   String tag = entry.value;
                   bool isSelected = selectedTagIds
-                      .contains(index + 1); // Based on tag_following
+                      .contains(index + 1); // อ้างอิงจาก tag_following
 
                   return FilterChip(
                     label: Text(tag),
