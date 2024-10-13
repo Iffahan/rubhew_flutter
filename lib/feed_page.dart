@@ -394,7 +394,8 @@ class Funca extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      item['price']!,
+                      item['price'] ??
+                          'N/A', // Provide a default value like 'N/A'
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -428,7 +429,7 @@ class Funca extends StatelessWidget {
             _buildInfoLabel('Description'),
 
             // Item Description Box
-            _buildInfoBox(item['description']!),
+            _buildInfoBox(item['description'] ?? 'No description available'),
 
             const SizedBox(height: 16),
 
@@ -437,26 +438,16 @@ class Funca extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Category Display
-                _buildLabelWithValues('Category', [item['category']]),
+                _buildLabelWithValues(
+                    'Category', [item['category'] ?? 'No category']),
 
                 // Tags Display
-                _buildTags(item['tags']),
+                _buildTags(item['tags'] as List<String>? ??
+                    []), // Fallback to an empty list if null
               ],
             ),
 
             const SizedBox(height: 16),
-
-            // Row for Brand, Model, Size
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildLabelWithValues('Brand', [item['brand']]),
-                _buildLabelWithValues('Model', [item['model']]),
-                _buildLabelWithValues('Size', [item['size']]),
-              ],
-            ),
-
-            const SizedBox(height: 8),
 
             // Display "Other" fields in a row
             if (item['other'] != null) _buildOtherFields(),
@@ -466,8 +457,8 @@ class Funca extends StatelessWidget {
     );
   }
 
-  // Function to build a label with values
-  Widget _buildLabelWithValues(String label, List<String> values) {
+// Function to build a label with values
+  Widget _buildLabelWithValues(String label, List<String?> values) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -481,7 +472,7 @@ class Funca extends StatelessWidget {
         for (var value in values)
           Padding(
             padding: const EdgeInsets.only(top: 4.0),
-            child: Text(value),
+            child: Text(value ?? 'N/A'), // Provide fallback if value is null
           ),
       ],
     );
@@ -527,34 +518,40 @@ class Funca extends StatelessWidget {
     );
   }
 
-  // Function to build an info box for description
-  Widget _buildInfoBox(String description) {
+// Function to build an info box for description
+  Widget _buildInfoBox(String? description) {
     return Container(
       padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Text(description),
+      child:
+          Text(description ?? 'N/A'), // Provide fallback if description is null
     );
   }
 
-  // Function to build tags
-  Widget _buildTags(List<String> tags) {
+// Function to build tags
+  Widget _buildTags(List<String>? tags) {
     return Row(
       children: [
         const Text('Tags:', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(width: 8),
-        for (var tag in tags)
-          Container(
-            margin: const EdgeInsets.only(right: 4.0),
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            decoration: BoxDecoration(
-              color: Colors.blue[200],
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Text(tag),
-          ),
+        if (tags != null &&
+            tags.isNotEmpty) // Check if tags are not null or empty
+          for (var tag in tags)
+            Container(
+              margin: const EdgeInsets.only(right: 4.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              decoration: BoxDecoration(
+                color: Colors.blue[200],
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(tag),
+            )
+        else
+          const Text('N/A'),
       ],
     );
   }
