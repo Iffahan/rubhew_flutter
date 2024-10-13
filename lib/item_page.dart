@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:rubhew/add_item_page.dart';
+import 'package:rubhew/follower_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyPostPage extends StatefulWidget {
@@ -55,13 +57,19 @@ class _MyPostPageState extends State<MyPostPage> {
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
-              // Notification page navigation
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyFollowerPage()),
+              );
             },
           ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // Add post navigation
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddPostPage()),
+              );
             },
           ),
         ],
