@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:rubhew/add_item_page.dart';
+import 'package:rubhew/edit_item_page.dart';
 import 'package:rubhew/follower_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,6 +47,12 @@ class _MyPostPageState extends State<MyPostPage> {
     }
   }
 
+  ImageProvider<Object> _getImage(String imageBase64) {
+    // Decode base64 string into bytes and return as ImageProvider
+    Uint8List bytes = base64Decode(imageBase64);
+    return MemoryImage(bytes);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,7 +84,7 @@ class _MyPostPageState extends State<MyPostPage> {
       ),
       body: Column(
         children: [
-          // Search bar remains unchanged
+          // Search bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
@@ -111,6 +119,7 @@ class _MyPostPageState extends State<MyPostPage> {
                   var item = items[index];
                   String status =
                       item['status'] ?? 'Unknown'; // รับสถานะจาก item
+                  int itemId = item['id_item']; // ดึงค่า itemId จากข้อมูลรายการ
                   Color statusColor;
 
                   // กำหนดสีพื้นหลังตามสถานะ
@@ -135,18 +144,15 @@ class _MyPostPageState extends State<MyPostPage> {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          image: item['images'] != null &&
-                                  item['images'].isNotEmpty
-                              ? DecorationImage(
-                                  image:
-                                      NetworkImage(item['images'][0]), // ภาพแรก
-                                  fit: BoxFit.cover,
-                                )
-                              : const DecorationImage(
-                                  image: AssetImage(
-                                      'assets/NoImage.png'), // ภาพเริ่มต้น
-                                  fit: BoxFit.cover,
-                                ),
+                          image: DecorationImage(
+                            image: (item['images'] != null &&
+                                    item['images'].isNotEmpty)
+                                ? _getImage(item['images']
+                                    [0]) // ถอดรหัส base64 จากภาพแรก
+                                : const AssetImage(
+                                    'assets/NoImage.png'), // ภาพเริ่มต้น
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         alignment: Alignment.bottomCenter,
                       ),
@@ -156,9 +162,15 @@ class _MyPostPageState extends State<MyPostPage> {
                         right: 8,
                         child: GestureDetector(
                           onTap: () {
-                            // จัดการกับการแก้ไข
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditItemPage(
+                                    itemId: itemId), // ส่ง itemId ไปหน้าแก้ไข
+                              ),
+                            );
                           },
-                          child: const Icon(Icons.edit, color: Colors.white),
+                          child: const Icon(Icons.edit, color: Colors.black),
                         ),
                       ),
                       // พื้นหลังสถานะครอบคลุมทั้งการ์ด
@@ -170,9 +182,9 @@ class _MyPostPageState extends State<MyPostPage> {
                           color: statusColor
                               .withOpacity(0.7), // สีพื้นหลังตามสถานะ
                           padding: const EdgeInsets.all(8.0),
-                          child: const Text(
-                            'Available', // สามารถแก้ไขเป็นข้อความที่คุณต้องการแสดง
-                            style: TextStyle(
+                          child: Text(
+                            status.capitalize(), // แสดงสถานะ
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -190,5 +202,15 @@ class _MyPostPageState extends State<MyPostPage> {
         ],
       ),
     );
+  }
+}
+
+// ฟังก์ชันช่วยเหลือในการแปลงอักษรตัวแรกเป็นตัวใหญ่
+extension StringExtension on String {
+  String capitalize() {
+    if (this.isEmpty) {
+      return '';
+    }
+    return this[0].toUpperCase() + this.substring(1);
   }
 }
