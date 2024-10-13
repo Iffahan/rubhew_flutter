@@ -30,10 +30,34 @@ class _AddPostPageState extends State<AddPostPage> {
   List<dynamic> _categories = [];
   String? _selectedCategory; // Selected category ID
 
+  List<String> tags = [];
+  List<int> selectedTagIds = [];
+  List<String> selectedTags = [];
+
   @override
   void initState() {
     super.initState();
     _fetchCategories(); // Fetch categories when the widget is initialized
+    _fetchTags();
+  }
+
+  // ฟังก์ชันเพื่อดึงข้อมูลแท็กจาก API
+  Future<void> _fetchTags() async {
+    const String apiUrl = 'http://10.0.2.2:8000/tags/';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        print('ok');
+        List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          tags = data.map((tag) => tag['name_tags'].toString()).toList();
+        });
+      } else {
+        throw Exception('ไม่สามารถดึงข้อมูลแท็กได้');
+      }
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -159,6 +183,7 @@ class _AddPostPageState extends State<AddPostPage> {
       "detail": additionalFieldsMap,
       "images": base64Images,
       "status": "Available",
+      "tags": selectedTagIds,
     };
 
     try {
@@ -320,6 +345,7 @@ class _AddPostPageState extends State<AddPostPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                _buildTagSection(), const SizedBox(height: 10),
                 // Add Field Button
                 TextButton.icon(
                   onPressed: _addField,
@@ -353,6 +379,43 @@ class _AddPostPageState extends State<AddPostPage> {
           ),
         ),
       ),
+    );
+  }
+
+  // ฟังก์ชันสำหรับแสดงแท็ก
+  Widget _buildTagSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Tags', style: TextStyle(fontSize: 18)),
+        const SizedBox(height: 10),
+        tags.isEmpty
+            ? const CircularProgressIndicator()
+            : Wrap(
+                spacing: 10,
+                children: tags.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  String tag = entry.value;
+                  bool isSelected = selectedTagIds
+                      .contains(index + 1); // อ้างอิงจาก tag_following
+
+                  return FilterChip(
+                    label: Text(tag),
+                    selected: isSelected,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        if (selected) {
+                          selectedTagIds.add(index + 1);
+                        } else {
+                          selectedTagIds.remove(index + 1);
+                        }
+                      });
+                    },
+                    selectedColor: Colors.lightGreenAccent,
+                  );
+                }).toList(),
+              ),
+      ],
     );
   }
 
