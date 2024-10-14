@@ -254,7 +254,6 @@ class _EditItemPageState extends State<EditItemPage> {
       "category_id": int.tryParse(_selectedCategory ?? '0') ?? 0,
       "detail": additionalFieldsMap,
       "images": base64Images,
-      "status": _selectedStatus ?? 'Available', // Use the selected status
       "tags": selectedTagIds,
     };
 
@@ -324,27 +323,27 @@ class _EditItemPageState extends State<EditItemPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                value: _selectedStatus,
-                hint: const Text('Select Status'),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'Available', child: Text('Available')),
-                  DropdownMenuItem(value: 'Sold', child: Text('Sold')),
-                  DropdownMenuItem(value: 'Progress', child: Text('Progress')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedStatus = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
+              // DropdownButtonFormField<String>(
+              //   value: _selectedStatus,
+              //   hint: const Text('Select Status'),
+              //   items: const [
+              //     DropdownMenuItem(
+              //         value: 'Available', child: Text('Available')),
+              //     DropdownMenuItem(value: 'Sold', child: Text('Sold')),
+              //     DropdownMenuItem(value: 'Progress', child: Text('Progress')),
+              //   ],
+              //   onChanged: (value) {
+              //     setState(() {
+              //       _selectedStatus = value;
+              //     });
+              //   },
+              //   decoration: const InputDecoration(
+              //     labelText: 'Status',
+              //     border: OutlineInputBorder(),
+              //     filled: true,
+              //     fillColor: Colors.white,
+              //   ),
+              // ),
               const SizedBox(height: 10),
               TextButton.icon(
                 onPressed: _pickImages,
