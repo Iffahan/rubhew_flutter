@@ -82,6 +82,9 @@ class _FeedPageState extends State<FeedPage> {
   List<int> tagFollowing = []; // Store followed tags
   List<int> categoryFollowing = []; // Store followed categories
 
+  final TextEditingController messageController = TextEditingController();
+  int selectedItemId = 0; // ID of the selected item to send message about
+
   @override
   void initState() {
     super.initState();
@@ -143,6 +146,7 @@ class _FeedPageState extends State<FeedPage> {
             List<int>.from(item['tags'].map((tag) => tag['id_tags']));
 
         return {
+          'id_item': item['id_item'],
           'name': item['name_item'] ?? 'Unknown',
           'merchant': item['user_profile'] != null
               ? item['user_profile']['username'] ?? 'Unknown User'
@@ -210,7 +214,10 @@ class _FeedPageState extends State<FeedPage> {
     });
   }
 
-  void _showMessagePopup(BuildContext context, String merchant) {
+  void _showMessagePopup(BuildContext context, String merchant, int itemId) {
+    selectedItemId = itemId; // Set the selected item ID
+    print('Selected item ID: $selectedItemId'); // Debugging
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -218,7 +225,7 @@ class _FeedPageState extends State<FeedPage> {
         return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
-          ), // Adjusts for keyboard
+          ), // Adjust for keyboard
           child: Container(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -236,15 +243,15 @@ class _FeedPageState extends State<FeedPage> {
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () {
-                        Navigator.pop(
-                            context); // Close the modal when "X" is pressed
+                        Navigator.pop(context); // Close the modal
                       },
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                const TextField(
-                  decoration: InputDecoration(
+                TextField(
+                  controller: messageController, // Assign the controller
+                  decoration: const InputDecoration(
                     labelText: 'Type your message',
                     border: OutlineInputBorder(),
                   ),
@@ -256,19 +263,54 @@ class _FeedPageState extends State<FeedPage> {
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(
-                            context); // Close the modal when "Cancel" is pressed
+                        Navigator.pop(context); // Close the modal
                       },
                       child: const Text('Cancel'),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        // Simulate sending the message
-                        Navigator.pop(
-                            context); // Close the modal after "sending"
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Message sent to $merchant!')),
-                        );
+                      onPressed: () async {
+                        // Send message logic within the popup
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                        String? token = prefs.getString('token');
+                        const String apiUrl = 'http://10.0.2.2:8000/requests/';
+                        String message = messageController.text;
+                        print(
+                            'Sending message: $message to item ID: $selectedItemId');
+
+                        try {
+                          final response = await http.post(
+                            Uri.parse(apiUrl),
+                            headers: {
+                              'Authorization': 'Bearer $token',
+                              'Content-Type': 'application/json',
+                            },
+                            body: json.encode({
+                              'id_item': selectedItemId,
+                              'message': message,
+                            }),
+                          );
+
+                          if (response.statusCode == 201) {
+                            print("Message sent successfully");
+
+                            final responseData = json.decode(response.body);
+                            print(
+                                responseData); // Display the response from API
+                            Navigator.pop(
+                                context); // Close the modal after sending
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Message sent to $merchant!')),
+                            );
+                          } else {
+                            print(
+                                "Failed to send message: ${response.statusCode}");
+                            print("Error response body: ${response.body}");
+                          }
+                        } catch (e) {
+                          print("Error sending message: $e");
+                        }
                       },
                       child: const Text('Send'),
                     ),
@@ -380,8 +422,8 @@ class _FeedPageState extends State<FeedPage> {
                   key: ValueKey<int>(currentIndex),
                   item: currentItem,
                   onNext: _showNextItem,
-                  onShowMessagePopup: () =>
-                      _showMessagePopup(context, currentItem['merchant'] ?? ''),
+                  onShowMessagePopup: () => _showMessagePopup(context,
+                      currentItem['merchant'] ?? '', currentItem['id_item']),
                 ),
               ),
             ),

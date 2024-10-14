@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -8,57 +12,106 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
-  // Mock data for profile
-  final Map<String, dynamic> profileData = {
-    'id_user': 1, // User's ID
-    'email': 'user@example.com',
-    'phoneNumber': '123-456-7890',
-    'address': '123 Main St, City, Country'
+  // Profile data variables
+  Map<String, dynamic> profileData = {
+    'id_user': 0,
+    'email': '',
+    'phoneNumber': '',
+    'address': '',
   };
 
-  // Mock data for all requests (both sent and received)
-  final List<Map<String, dynamic>> allRequests = [
-    {
-      'id_sent': 1,
-      'id_receive': 2, // Sent to another user
-      'id_item': 11,
-      'item_image': 'https://via.placeholder.com/150',
-      'item_name': 'Vintage Lamp',
-      'message': 'I would like to buy this lamp.',
-      'status': 'Available',
-      'respond_message': '',
-    },
-    {
-      'id_sent': 2,
-      'id_receive': 1, // Received by current user
-      'id_item': 21,
-      'item_image': 'https://via.placeholder.com/150',
-      'item_name': 'Modern Chair',
-      'message': 'Can you send this chair to me?',
-      'status': 'Available',
-      'respond_message': '',
-    },
-    {
-      'id_sent': 1,
-      'id_receive': 3, // Sent to another user
-      'id_item': 12,
-      'item_image': 'https://via.placeholder.com/150',
-      'item_name': 'Antique Vase',
-      'message': 'Is this vase still available?',
-      'status': 'Progress',
-      'respond_message': '',
-    },
-    {
-      'id_sent': 3,
-      'id_receive': 1, // Received by current user
-      'id_item': 22,
-      'item_image': 'https://via.placeholder.com/150',
-      'item_name': 'Wooden Table',
-      'message': 'I want this table for my new home.',
-      'status': 'Available',
-      'respond_message': '',
-    },
-  ];
+  // All requests combined
+  List<Map<String, dynamic>> allRequests = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile(); // Fetch profile data on init
+    _fetchRequests(); // Fetch request data on init
+  }
+
+  // Fetch user profile data from API
+  Future<void> _fetchProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    const String apiUrl = 'http://10.0.2.2:8000/profiles/me';
+
+    try {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        setState(() {
+          profileData = {
+            'id_user': data['user_id'],
+            'email': data['email'] ?? '',
+            'phoneNumber': data['phoneNumber'] ?? '',
+            'address': data['address'] ?? '',
+          };
+        });
+      } else {
+        throw Exception('Unable to fetch profile data');
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+// Fetch requests data from API
+  Future<void> _fetchRequests() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    const String apiUrl = 'http://10.0.2.2:8000/requests';
+
+    try {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+
+        // Print the raw data to see the structure
+        print('Raw fetched data: $data');
+
+        setState(() {
+          allRequests = data.map((request) {
+            // Print individual request data before mapping
+            print('Mapping request: $request');
+
+            return {
+              'id_sent': request['id_sent'],
+              'id_receive': request['id_receive'],
+              'id_item': request['id_item'],
+              'item_image': request['item']['images'].isNotEmpty
+                  ? request['item']['images'][0]
+                  : '',
+              'item_name': request['item']['name_item'],
+              'message': request['message'] ?? '',
+              'respond_message': request['res_message'] ?? '',
+              'sender_email': request['sender']['email'],
+              'receiver_email': request['receiver']['email'],
+            };
+          }).toList();
+
+          // Print mapped requests to verify after processing
+          print('Mapped requests: $allRequests');
+        });
+      } else {
+        throw Exception('Unable to fetch request data');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   // Method to filter sent requests based on id_user
   List<Map<String, dynamic>> getSentRequests() {
@@ -72,6 +125,12 @@ class _NotificationPageState extends State<NotificationPage> {
     return allRequests
         .where((request) => request['id_receive'] == profileData['id_user'])
         .toList();
+  }
+
+  ImageProvider<Object> _getImage(String imageBase64) {
+    // Decode base64 string into bytes and return as ImageProvider
+    Uint8List bytes = base64Decode(imageBase64);
+    return MemoryImage(bytes);
   }
 
   // Method to show the message popup
@@ -244,7 +303,24 @@ class _NotificationPageState extends State<NotificationPage> {
                     elevation: 4,
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
-                      leading: Image.network(request['item_image']!),
+                      leading: Container(
+                        width:
+                            50, // Optional: Set the width of the image container
+                        height:
+                            50, // Optional: Set the height of the image container
+                        decoration: BoxDecoration(
+                          shape: BoxShape
+                              .rectangle, // Change this if you want circular images
+                          image: DecorationImage(
+                            image: (request['item_image'] != null &&
+                                    ['item_image'].isNotEmpty)
+                                ? _getImage(request['item_image'])
+                                : const AssetImage(
+                                    'assets/NoImage.png'), // Default image
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
                       title: Text(request['item_name']!),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
