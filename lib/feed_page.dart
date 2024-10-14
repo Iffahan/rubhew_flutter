@@ -89,7 +89,6 @@ class _FeedPageState extends State<FeedPage> {
     _fetchProfile(); // Fetch profile data
   }
 
-  // Function to fetch user profile data
   Future<void> _fetchProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -106,17 +105,19 @@ class _FeedPageState extends State<FeedPage> {
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
 
-        // Store user profile data
-        setState(() {
-          userId = data['user_id']; // Store user ID
-          tagFollowing =
-              List<int>.from(data['tag_following']); // Store followed tags
-          categoryFollowing = List<int>.from(
-              data['category_following']); // Store followed categories
-        });
+        // Check if the widget is still mounted before calling setState
+        if (mounted) {
+          setState(() {
+            userId = data['user_id']; // Store user ID
+            tagFollowing =
+                List<int>.from(data['tag_following']); // Store followed tags
+            categoryFollowing = List<int>.from(
+                data['category_following']); // Store followed categories
+          });
 
-        // After fetching profile, fetch items
-        fetchItems(); // Call to fetch items now that profile data is available
+          // After fetching profile, fetch items
+          fetchItems(); // Call to fetch items now that profile data is available
+        }
       } else {
         throw Exception('Unable to fetch profile data');
       }
@@ -183,10 +184,13 @@ class _FeedPageState extends State<FeedPage> {
         return bTagMatch.compareTo(aTagMatch);
       });
 
-      setState(() {
-        filteredItems =
-            items; // Update the state with filtered and sorted items
-      });
+      // Check if the widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          filteredItems =
+              items; // Update the state with filtered and sorted items
+        });
+      }
     } else {
       print('Failed to load items: ${response.statusCode}');
     }
