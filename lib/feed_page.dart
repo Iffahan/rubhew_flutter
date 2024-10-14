@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
@@ -76,13 +77,55 @@ class _FeedPageState extends State<FeedPage> {
   String searchQuery = ''; // Query for search
   List<Map<String, dynamic>> filteredItems = [];
 
+  // Variables to store profile data
+  int? userId; // Store user ID
+  List<int> tagFollowing = []; // Store followed tags
+  List<int> categoryFollowing = []; // Store followed categories
+
   @override
   void initState() {
     super.initState();
     fetchItems(); // Fetch items from the API
+    _fetchProfile(); // Fetch profile data
   }
 
-  // Function to fetch items from the API
+  Future<void> _fetchProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    const String apiUrl = 'http://10.0.2.2:8000/profiles/me';
+
+    try {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+
+        // Check if the widget is still mounted before calling setState
+        if (mounted) {
+          setState(() {
+            userId = data['user_id']; // Store user ID
+            tagFollowing =
+                List<int>.from(data['tag_following']); // Store followed tags
+            categoryFollowing = List<int>.from(
+                data['category_following']); // Store followed categories
+          });
+
+          // After fetching profile, fetch items
+          fetchItems(); // Call to fetch items now that profile data is available
+        }
+      } else {
+        throw Exception('Unable to fetch profile data');
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
   Future<void> fetchItems() async {
     final url = Uri.parse('http://10.0.2.2:8000/items');
     final response = await http.get(url);
@@ -90,13 +133,20 @@ class _FeedPageState extends State<FeedPage> {
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
 
-      // Map the fetched items to match the mock data format
-      items = data.map<Map<String, dynamic>>((item) {
+      // Filter and map the fetched items
+      items = data.where((item) {
+        // Include only items that are "Available" and not owned by the user
+        return item['status'] == 'Available' && item['id_user'] != userId;
+      }).map<Map<String, dynamic>>((item) {
+        // Create a new list of tag IDs
+        List<int> tagIds =
+            List<int>.from(item['tags'].map((tag) => tag['id_tags']));
+
         return {
           'name': item['name_item'] ?? 'Unknown',
           'merchant': item['user_profile'] != null
-              ? item['user_profile']['username'] ?? 'Unknown Merchant'
-              : 'Unknown Merchant',
+              ? item['user_profile']['username'] ?? 'Unknown User'
+              : 'Unknown User',
           'image': item['images'].isNotEmpty ? item['images'][0] : '',
           'description': item['description'] ?? 'No description available',
           'price': '${item['price'] ?? 0} THB',
@@ -105,13 +155,42 @@ class _FeedPageState extends State<FeedPage> {
               : 'Unknown Category',
           'tags': List<String>.from(
               item['tags'].map((tag) => tag['name_tags'] ?? '')),
+          'tags_id': tagIds, // New variable for tag IDs
           'other': item['detail'] ?? {}, // Map the detail field to other
+          'category_id': item['category_id'], // Include category ID for sorting
         };
       }).toList();
 
-      setState(() {
-        filteredItems = items; // Initially, show all items
+      // Sort items based on category and tags following
+      items.sort((a, b) {
+        // Check if both items are in followed categories
+        bool aInCategory = categoryFollowing.contains(a['category_id']);
+        bool bInCategory = categoryFollowing.contains(b['category_id']);
+
+        // Sort by category first
+        if (aInCategory && !bInCategory) {
+          return -1; // a comes before b
+        } else if (!aInCategory && bInCategory) {
+          return 1; // b comes before a
+        }
+
+        // If both or neither are in followed categories, sort by tags
+        int aTagMatch =
+            a['tags_id'].any((tagId) => tagFollowing.contains(tagId)) ? 1 : 0;
+        int bTagMatch =
+            b['tags_id'].any((tagId) => tagFollowing.contains(tagId)) ? 1 : 0;
+
+        // If both items have tag matches, keep their order; otherwise, sort accordingly
+        return bTagMatch.compareTo(aTagMatch);
       });
+
+      // Check if the widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          filteredItems =
+              items; // Update the state with filtered and sorted items
+        });
+      }
     } else {
       print('Failed to load items: ${response.statusCode}');
     }
