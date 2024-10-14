@@ -91,7 +91,7 @@ class _EditItemPageState extends State<EditItemPage> {
         setState(() {
           _itemDetails = json.decode(response.body);
           _nameController.text = _itemDetails['name_item'] ?? '';
-          _priceController.text = _itemDetails['price'].toString() ?? '';
+          _priceController.text = _itemDetails['price'].toString();
           _descriptionController.text = _itemDetails['description'] ?? '';
           _selectedCategory = _itemDetails['category_id'].toString();
           _selectedStatus = _itemDetails['status']; // Load status

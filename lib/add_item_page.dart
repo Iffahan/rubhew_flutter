@@ -439,7 +439,7 @@ class _AddPostPageState extends State<AddPostPage> {
   // Helper method to build additional fields dynamically
   Widget _buildAdditionalField(int index) {
     String key = _additionalFields[index].keys.first;
-    String value = _additionalFields[index][key] ?? '';
+    // String value = _additionalFields[index][key] ?? '';
 
     return Column(
       children: [
