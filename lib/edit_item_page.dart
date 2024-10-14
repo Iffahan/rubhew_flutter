@@ -41,6 +41,44 @@ class _EditItemPageState extends State<EditItemPage> {
     _fetchTags();
   }
 
+  // Function to delete the item
+  Future<void> _deleteItem() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    if (token == null) {
+      print('Token not found');
+      return;
+    }
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://10.0.2.2:8000/items/${widget.itemId}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 204) {
+        if (mounted) {
+          _showDialog('Success', 'Item deleted successfully!');
+        }
+        print("Item deleted successfully");
+
+        // Navigate back to the main page after deletion
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
+      } else {
+        print("Failed to delete item: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error deleting item: $e");
+    }
+  }
+
   // ฟังก์ชันเพื่อดึงข้อมูลแท็กจาก API
   Future<void> _fetchTags() async {
     const String apiUrl = 'http://10.0.2.2:8000/tags/';
@@ -170,8 +208,9 @@ class _EditItemPageState extends State<EditItemPage> {
     );
   }
 
+  // Function to show dialog after deleting
   void _showDialog(String title, String message) {
-    if (!mounted) return; // Check if the widget is still mounted
+    if (!mounted) return;
 
     showDialog(
       context: context,
@@ -182,10 +221,7 @@ class _EditItemPageState extends State<EditItemPage> {
           TextButton(
             onPressed: () {
               if (mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MainScreen()),
-                );
+                Navigator.of(context).pop(); // Close dialog
               }
             },
             child: const Text('OK'),
@@ -345,11 +381,57 @@ class _EditItemPageState extends State<EditItemPage> {
                       style: TextStyle(fontSize: 18, color: Colors.black)),
                 ),
               ),
+              const SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    bool confirmDelete = await _showConfirmDeleteDialog();
+                    if (confirmDelete) {
+                      _deleteItem();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 100, vertical: 15),
+                  ),
+                  child: const Text('Delete Item',
+                      style: TextStyle(fontSize: 18, color: Colors.white)),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // Confirmation dialog before deleting
+  Future<bool> _showConfirmDeleteDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Confirm Deletion'),
+              content: const Text('Are you sure you want to delete this item?'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(false); // Return false
+                  },
+                ),
+                TextButton(
+                  child: const Text('Delete'),
+                  onPressed: () {
+                    Navigator.of(context).pop(true); // Return true
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false; // Return false if dialog is dismissed
   }
 
   // ฟังก์ชันสำหรับแสดงแท็ก
