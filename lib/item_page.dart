@@ -47,6 +47,15 @@ class _MyPostPageState extends State<MyPostPage> {
     }
   }
 
+  bool isValidBase64(String base64String) {
+    try {
+      base64Decode(base64String);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   ImageProvider<Object> _getImage(String imageBase64) {
     // Decode base64 string into bytes and return as ImageProvider
     Uint8List bytes = base64Decode(imageBase64);
@@ -146,11 +155,12 @@ class _MyPostPageState extends State<MyPostPage> {
                           borderRadius: BorderRadius.circular(10),
                           image: DecorationImage(
                             image: (item['images'] != null &&
-                                    item['images'].isNotEmpty)
+                                    item['images'].isNotEmpty &&
+                                    isValidBase64(item['images'][0]))
                                 ? _getImage(item['images']
                                     [0]) // ถอดรหัส base64 จากภาพแรก
-                                : const AssetImage(
-                                    'assets/NoImage.png'), // ภาพเริ่มต้น
+                                : const AssetImage('assets/NoImage.png'),
+                            // ภาพเริ่มต้น
                             fit: BoxFit.cover,
                           ),
                         ),

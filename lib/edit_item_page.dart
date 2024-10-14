@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:rubhew/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EditItemPage extends StatefulWidget {
@@ -28,11 +29,35 @@ class _EditItemPageState extends State<EditItemPage> {
 
   final List<Map<String, String>> _additionalFields = [];
 
+  List<String> tags = [];
+  List<int> selectedTagIds = [];
+  List<String> selectedTags = [];
+
   @override
   void initState() {
     super.initState();
     _fetchCategories();
     _fetchItemDetails(); // Fetch item data for editing
+    _fetchTags();
+  }
+
+  // ฟังก์ชันเพื่อดึงข้อมูลแท็กจาก API
+  Future<void> _fetchTags() async {
+    const String apiUrl = 'http://10.0.2.2:8000/tags/';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        print('ok');
+        List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          tags = data.map((tag) => tag['name_tags'].toString()).toList();
+        });
+      } else {
+        throw Exception('ไม่สามารถดึงข้อมูลแท็กได้');
+      }
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -66,7 +91,7 @@ class _EditItemPageState extends State<EditItemPage> {
         setState(() {
           _itemDetails = json.decode(response.body);
           _nameController.text = _itemDetails['name_item'] ?? '';
-          _priceController.text = _itemDetails['price'].toString() ?? '';
+          _priceController.text = _itemDetails['price'].toString();
           _descriptionController.text = _itemDetails['description'] ?? '';
           _selectedCategory = _itemDetails['category_id'].toString();
           _selectedStatus = _itemDetails['status']; // Load status
@@ -145,6 +170,31 @@ class _EditItemPageState extends State<EditItemPage> {
     );
   }
 
+  void _showDialog(String title, String message) {
+    if (!mounted) return; // Check if the widget is still mounted
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MainScreen()),
+                );
+              }
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _updateItem() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -169,6 +219,7 @@ class _EditItemPageState extends State<EditItemPage> {
       "detail": additionalFieldsMap,
       "images": base64Images,
       "status": _selectedStatus ?? 'Available', // Use the selected status
+      "tags": selectedTagIds,
     };
 
     try {
@@ -182,6 +233,9 @@ class _EditItemPageState extends State<EditItemPage> {
       );
 
       if (response.statusCode == 200) {
+        if (mounted) {
+          ; // _showDialog("Success", "Item updated successfully!");
+        }
         print("Item updated successfully");
 
         // Show success message and navigate back
@@ -209,6 +263,8 @@ class _EditItemPageState extends State<EditItemPage> {
               _buildTextField('Enter the name', _nameController),
               const SizedBox(height: 10),
               _buildTextField('Price', _priceController, isPrice: true),
+              const SizedBox(height: 10),
+              _buildTagSection(),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
@@ -293,6 +349,43 @@ class _EditItemPageState extends State<EditItemPage> {
           ),
         ),
       ),
+    );
+  }
+
+  // ฟังก์ชันสำหรับแสดงแท็ก
+  Widget _buildTagSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Tags', style: TextStyle(fontSize: 18)),
+        const SizedBox(height: 10),
+        tags.isEmpty
+            ? const CircularProgressIndicator()
+            : Wrap(
+                spacing: 10,
+                children: tags.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  String tag = entry.value;
+                  bool isSelected = selectedTagIds
+                      .contains(index + 1); // อ้างอิงจาก tag_following
+
+                  return FilterChip(
+                    label: Text(tag),
+                    selected: isSelected,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        if (selected) {
+                          selectedTagIds.add(index + 1);
+                        } else {
+                          selectedTagIds.remove(index + 1);
+                        }
+                      });
+                    },
+                    selectedColor: Colors.lightGreenAccent,
+                  );
+                }).toList(),
+              ),
+      ],
     );
   }
 
