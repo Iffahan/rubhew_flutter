@@ -125,7 +125,6 @@ class _FeedPageState extends State<FeedPage> {
     }
   }
 
-// Function to fetch items from the API
   Future<void> fetchItems() async {
     final url = Uri.parse('http://10.0.2.2:8000/items');
     final response = await http.get(url);
@@ -138,6 +137,10 @@ class _FeedPageState extends State<FeedPage> {
         // Include only items that are "Available" and not owned by the user
         return item['status'] == 'Available' && item['id_user'] != userId;
       }).map<Map<String, dynamic>>((item) {
+        // Create a new list of tag IDs
+        List<int> tagIds =
+            List<int>.from(item['tags'].map((tag) => tag['id_tags']));
+
         return {
           'name': item['name_item'] ?? 'Unknown',
           'merchant': item['user_profile'] != null
@@ -151,10 +154,34 @@ class _FeedPageState extends State<FeedPage> {
               : 'Unknown Category',
           'tags': List<String>.from(
               item['tags'].map((tag) => tag['name_tags'] ?? '')),
+          'tags_id': tagIds, // New variable for tag IDs
           'other': item['detail'] ?? {}, // Map the detail field to other
           'category_id': item['category_id'], // Include category ID for sorting
         };
       }).toList();
+
+      // Sort items based on category and tags following
+      items.sort((a, b) {
+        // Check if both items are in followed categories
+        bool aInCategory = categoryFollowing.contains(a['category_id']);
+        bool bInCategory = categoryFollowing.contains(b['category_id']);
+
+        // Sort by category first
+        if (aInCategory && !bInCategory) {
+          return -1; // a comes before b
+        } else if (!aInCategory && bInCategory) {
+          return 1; // b comes before a
+        }
+
+        // If both or neither are in followed categories, sort by tags
+        int aTagMatch =
+            a['tags_id'].any((tagId) => tagFollowing.contains(tagId)) ? 1 : 0;
+        int bTagMatch =
+            b['tags_id'].any((tagId) => tagFollowing.contains(tagId)) ? 1 : 0;
+
+        // If both items have tag matches, keep their order; otherwise, sort accordingly
+        return bTagMatch.compareTo(aTagMatch);
+      });
 
       setState(() {
         filteredItems =
