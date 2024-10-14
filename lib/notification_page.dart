@@ -88,13 +88,17 @@ class _NotificationPageState extends State<NotificationPage> {
             print('Mapping request: $request');
 
             return {
+              'id': request['id'],
               'id_sent': request['id_sent'],
               'id_receive': request['id_receive'],
               'id_item': request['id_item'],
+              'name_sender': request['sender']['username'],
+              'name_receiver': request['receiver']['username'],
               'item_image': request['item']['images'].isNotEmpty
                   ? request['item']['images'][0]
                   : '',
               'item_name': request['item']['name_item'],
+              'item_status': request['item']['status'],
               'message': request['message'] ?? '',
               'respond_message': request['res_message'] ?? '',
               'sender_email': request['sender']['email'],
@@ -133,8 +137,9 @@ class _NotificationPageState extends State<NotificationPage> {
     return MemoryImage(bytes);
   }
 
-  // Method to show the message popup
-  void _showMessagePopup(BuildContext context, String merchant) {
+// Method to show the message popup
+  void _showMessagePopup(
+      BuildContext context, String merchant, int idItem, int requestId) {
     TextEditingController messageController = TextEditingController();
 
     showModalBottomSheet(
@@ -220,13 +225,31 @@ class _NotificationPageState extends State<NotificationPage> {
                       child: const Text('Cancel'),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        // Simulate sending the message
-                        Navigator.pop(
-                            context); // Close the modal after "sending"
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Message sent to $merchant!')),
-                        );
+                      onPressed: () async {
+                        // Handle the API call when sending the response
+                        final resMessage = messageController.text.trim();
+                        if (resMessage.isNotEmpty) {
+                          bool success =
+                              await _respondToRequest(requestId, resMessage);
+                          Navigator.pop(
+                              context); // Close the modal after "sending"
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Response sent to $merchant!')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Failed to send response.')),
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Message cannot be empty.')),
+                          );
+                        }
                       },
                       child: const Text('Send'),
                     ),
@@ -240,22 +263,105 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
-  // Method to handle accepting a request
-  void _acceptRequest(int index) {
-    final request = getReceivedRequests()[index];
-    _showMessagePopup(
-        context, request['item_name']); // Show message popup with item name
+// Method to respond to a request using the API
+  Future<bool> _respondToRequest(int requestId, String resMessage) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    final String apiUrl =
+        'http://10.0.2.2:8000/requests/$requestId/respond'; // Update with the correct URL
+
+    // Create the request body
+    final body = jsonEncode({
+      'res_message': resMessage,
+      'item_status': 'Sold', // Set item status to "Sold"
+    });
+
+    try {
+      final response = await http.put(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        // Check for successful response
+        print("Response sent successfully");
+        return true;
+      } else {
+        print("Failed to send response: ${response.statusCode}");
+        print("Error response body: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error sending response: $e");
+      return false;
+    }
   }
 
-  // Method to handle canceling a sent request
-  void _cancelRequest(int index) {
+  // Method to delete a request by ID
+  Future<void> _deleteRequest(int requestId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    print('requestId $requestId');
+    final String apiUrl =
+        'http://10.0.2.2:8000/requests/$requestId'; // Update with the correct URL
+
+    try {
+      final response = await http.delete(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 204) {
+        // Check for successful deletion
+        print("Request deleted successfully");
+      } else {
+        print("Failed to delete request: ${response.statusCode}");
+        print("Error response body: ${response.body}");
+      }
+    } catch (e) {
+      print("Error deleting request: $e");
+    }
+  }
+
+// Method to handle accepting a request
+  void _acceptRequest(int index) {
+    final request = getReceivedRequests()[index];
+    _showMessagePopup(context, request['name_sender'], request['id_item'],
+        request['id']); // Pass the request ID
+  }
+
+// Method to handle canceling a sent request
+  void _cancelRequest(int index) async {
+    final request =
+        getSentRequests()[index]; // Get the specific request to cancel
+    final requestId = request['id']; // Assuming this is the request ID
+
+    // Call the API to delete the request
+    await _deleteRequest(requestId);
+
+    // Remove the request from the local state after the API call
     setState(() {
       allRequests.removeAt(index); // Remove the sent request
     });
   }
 
-  // Method to handle canceling a received request
-  void _cancelReceivedRequest(int index) {
+// Method to handle canceling a received request
+  void _cancelReceivedRequest(int index) async {
+    final request =
+        getReceivedRequests()[index]; // Get the specific request to cancel
+    final requestId = request['id']; // Assuming this is the request ID
+
+    // Call the API to delete the request
+    await _deleteRequest(requestId);
+
+    // Remove the request from the local state after the API call
     setState(() {
       allRequests.removeAt(index); // Remove the received request
     });
@@ -265,6 +371,16 @@ class _NotificationPageState extends State<NotificationPage> {
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> sentRequests = getSentRequests();
     List<Map<String, dynamic>> receivedRequests = getReceivedRequests();
+
+    // Filter for completed requests (status = "Sold")
+    List<Map<String, dynamic>> completedRequests = receivedRequests
+        .where((request) => request['item_status'] == 'Sold')
+        .toList();
+
+    // Filter for active requests (exclude "Sold" items)
+    List<Map<String, dynamic>> activeReceivedRequests = receivedRequests
+        .where((request) => request['item_status'] != 'Sold')
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -304,16 +420,13 @@ class _NotificationPageState extends State<NotificationPage> {
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
                       leading: Container(
-                        width:
-                            50, // Optional: Set the width of the image container
-                        height:
-                            50, // Optional: Set the height of the image container
+                        width: 50,
+                        height: 50,
                         decoration: BoxDecoration(
-                          shape: BoxShape
-                              .rectangle, // Change this if you want circular images
+                          shape: BoxShape.rectangle,
                           image: DecorationImage(
                             image: (request['item_image'] != null &&
-                                    ['item_image'].isNotEmpty)
+                                    request['item_image'].isNotEmpty)
                                 ? _getImage(request['item_image'])
                                 : const AssetImage(
                                     'assets/NoImage.png'), // Default image
@@ -321,22 +434,21 @@ class _NotificationPageState extends State<NotificationPage> {
                           ),
                         ),
                       ),
-                      title: Text(request['item_name']!),
+                      title: Text(request['name_receiver']!),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 4),
                           Text(
                             request['message'] ?? 'No message provided',
-                            style: const TextStyle(
-                                fontSize: 12), // Smaller font size
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ],
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.cancel),
                         onPressed: () {
-                          _cancelRequest(allRequests
+                          _cancelRequest(sentRequests
                               .indexOf(request)); // Cancel the sent request
                         },
                       ),
@@ -353,31 +465,37 @@ class _NotificationPageState extends State<NotificationPage> {
             const SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
-                itemCount: receivedRequests.length,
+                itemCount: activeReceivedRequests.length,
                 itemBuilder: (context, index) {
-                  final request = receivedRequests[index];
+                  final request = activeReceivedRequests[index];
                   return Card(
                     elevation: 4,
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
-                      leading: Image.network(request['item_image']!),
-                      title: Text(request['item_name']!),
+                      leading: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.rectangle,
+                          image: DecorationImage(
+                            image: (request['item_image'] != null &&
+                                    request['item_image'].isNotEmpty)
+                                ? _getImage(request['item_image'])
+                                : const AssetImage(
+                                    'assets/NoImage.png'), // Default image
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      title: Text(request['name_sender']!),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 4),
                           Text(
                             request['message'] ?? 'No message provided',
-                            style: const TextStyle(
-                                fontSize: 12), // Smaller font size
+                            style: const TextStyle(fontSize: 12),
                           ),
-                          if (request['respond_message'] !=
-                              '') // Display response message if available
-                            Text(
-                              request['respond_message']['message'],
-                              style: const TextStyle(
-                                  fontSize: 12, fontStyle: FontStyle.italic),
-                            ),
                         ],
                       ),
                       trailing: Row(
@@ -386,8 +504,9 @@ class _NotificationPageState extends State<NotificationPage> {
                           IconButton(
                             icon: const Icon(Icons.cancel),
                             onPressed: () {
-                              _cancelReceivedRequest(allRequests.indexOf(
-                                  request)); // Cancel the received request
+                              _cancelReceivedRequest(
+                                  activeReceivedRequests.indexOf(
+                                      request)); // Cancel the received request
                             },
                           ),
                           IconButton(
@@ -398,6 +517,49 @@ class _NotificationPageState extends State<NotificationPage> {
                             },
                           ),
                         ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 40),
+            const Text(
+              'Completed Requests',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: completedRequests.length,
+                itemBuilder: (context, index) {
+                  final request = completedRequests[index];
+                  return Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      leading: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.rectangle,
+                          image: DecorationImage(
+                            image: (request['item_image'] != null &&
+                                    request['item_image'].isNotEmpty)
+                                ? _getImage(request['item_image'])
+                                : const AssetImage(
+                                    'assets/NoImage.png'), // Default image
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      title: Text(request['name_sender']!),
+                      subtitle: Text(
+                        'Reply: ${request['respond_message']}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
                   );
