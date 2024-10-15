@@ -10,7 +10,6 @@ pipeline {
         stage('Set Flutter Channel') {
             steps {
                 sh 'flutter channel stable'
-                sh 'flutter upgrade'
             }
         }
         stage('Install Dependencies') {

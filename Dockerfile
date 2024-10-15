@@ -3,6 +3,7 @@ FROM jenkins/jenkins:lts
 
 # ติดตั้ง Flutter dependencies
 USER root
+
 RUN apt-get update && apt-get install -y \
     curl \
     git \
