@@ -1,36 +1,37 @@
 pipeline {
     agent any
-    
+
     stages {
         stage('Checkout') {
             steps {
-                // ดึงโค้ดจาก Git repository
                 checkout scm
+            }
+        }
+        stage('Set Flutter Channel') {
+            steps {
+                sh 'flutter channel stable'
+                sh 'flutter upgrade'
             }
         }
         stage('Install Dependencies') {
             steps {
-                // ติดตั้ง dependencies ของ Flutter project
                 sh 'flutter pub get'
             }
         }
         stage('Build APK') {
             steps {
-                // Build APK สำหรับ Android
                 sh 'flutter build apk --release'
             }
         }
         stage('Test') {
             steps {
-                // รัน unit tests ของ Flutter
-                sh 'flutter test'
+                sh 'flutter test --reporter=junit --reporter-path=build/test-results/'
             }
         }
     }
-    
+
     post {
         always {
-            // จัดการผลลัพธ์ของการทดสอบ
             junit 'build/test-results/**/*.xml'
         }
         success {
