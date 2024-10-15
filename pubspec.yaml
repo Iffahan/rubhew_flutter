@@ -27,7 +27,7 @@ dev_dependencies:
 flutter_icons:
   ios: true
   android: true
-  image_path : assets/logo.png
+  image_path : assets/icon.png
   
 flutter_native_splash:
   color: "#00BFFF"  # สีพื้นหลัง (blue)
@@ -45,3 +45,4 @@ flutter:
     - assets/image3.jpg
     - assets/image4.jpg
     - assets/NoImage.png
+    - assets/icon.png
