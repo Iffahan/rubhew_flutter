@@ -1,54 +1,43 @@
 pipeline {
     agent any
-
-    environment {
-        FLUTTER_HOME = 'E:/flutter'
-        PATH = "$FLUTTER_HOME/bin:$PATH"
-    }
-
+    
     stages {
         stage('Checkout') {
             steps {
-                // Clone project repository
-                git 'https://github.com/your-repository/flutter-project.git'
+                // ดึงโค้ดจาก Git repository
+                checkout scm
             }
         }
-
         stage('Install Dependencies') {
             steps {
-                // Install dependencies
+                // ติดตั้ง dependencies ของ Flutter project
                 sh 'flutter pub get'
             }
         }
-
+        stage('Build APK') {
+            steps {
+                // Build APK สำหรับ Android
+                sh 'flutter build apk --release'
+            }
+        }
         stage('Test') {
             steps {
-                // Run Flutter tests
+                // รัน unit tests ของ Flutter
                 sh 'flutter test'
             }
         }
-
-        stage('Build') {
-            steps {
-                // Build APK for Android or app for iOS
-                sh 'flutter build apk --release'  // สำหรับ Android
-                // sh 'flutter build ios --release'  // สำหรับ iOS
-            }
-        }
     }
-
+    
     post {
         always {
-            // Archive APK or app builds
-            archiveArtifacts artifacts: '**/build/app/outputs/**/*.apk', allowEmptyArchive: true
-            // Archive test results
-            junit 'build/test-results/test/*.xml'
+            // จัดการผลลัพธ์ของการทดสอบ
+            junit 'build/test-results/**/*.xml'
         }
         success {
-            echo 'Build and test successful!'
+            echo 'Build and Test Success!'
         }
         failure {
-            echo 'Build or test failed.'
+            echo 'Build or Test Failed.'
         }
     }
 }
